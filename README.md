@@ -37,11 +37,14 @@ docs/       Outline, architecture, data-flow, schema docs (grows per section)
 
 ### Backend
 
+Uses a dedicated conda environment named `prolog` (Python 3.12).
+
 ```
+conda create -n prolog python=3.12   # first time only
+conda activate prolog
 cd backend
-python -m venv .venv && .venv\Scripts\activate   # Windows
 pip install -e ".[dev]"
-copy .env.example .env                            # then edit DATABASE_URL etc.
+copy .env.example .env                # then edit DATABASE_URL etc.
 uvicorn app.main:app --reload
 ```
 
