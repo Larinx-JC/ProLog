@@ -7,6 +7,7 @@ venv/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
 *.db
 *.sqlite3
 
@@ -16,6 +17,7 @@ dist/
 build/
 .vite/
 coverage/
+*.tsbuildinfo
 
 # Env / secrets
 .env

@@ -23,11 +23,42 @@ all run and measurement data, and a role system (Admin / Operator / Reviewer).
 
 ## Repository layout
 
-This repo is being built section by section against a written outline;
-each section lands as its own PR. See [CONTRIBUTING.md](CONTRIBUTING.md)
-for the branching/PR workflow. `docs/` will hold the architecture,
-data-flow, and schema documentation as sections land.
+This repo is being built section by section against a written outline
+(see [docs/outline.md](docs/outline.md)); each section lands as its own
+PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/PR workflow.
+
+```
+backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest
+frontend/   React + TypeScript app (Vite), vitest
+docs/       Outline, architecture, data-flow, schema docs (grows per section)
+```
+
+## Getting started
+
+### Backend
+
+```
+cd backend
+python -m venv .venv && .venv\Scripts\activate   # Windows
+pip install -e ".[dev]"
+copy .env.example .env                            # then edit DATABASE_URL etc.
+uvicorn app.main:app --reload
+```
+
+Run tests: `pytest` (from `backend/`). Lint: `ruff check .`. Type-check: `mypy app`.
+
+### Frontend
+
+```
+cd frontend
+npm install
+copy .env.example .env
+npm run dev
+```
+
+Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Scaffolding in progress — no application code yet.
+Section 1 (Project Scaffolding & Conventions) complete. See
+[docs/outline.md](docs/outline.md) for what's next.
