@@ -43,12 +43,15 @@ Uses a dedicated conda environment named `prolog` (Python 3.12).
 conda create -n prolog python=3.12   # first time only
 conda activate prolog
 cd backend
-pip install -e ".[dev]"
+pip install -r requirements-lock.txt  # pinned, reproducible versions
+pip install -e . --no-deps
 copy .env.example .env                # then edit DATABASE_URL etc.
 uvicorn app.main:app --reload
 ```
 
 Run tests: `pytest` (from `backend/`). Lint: `ruff check .`. Type-check: `mypy app`.
+Regenerating `requirements-lock.txt` after changing dependencies: see the
+comment at the top of that file.
 
 ### Frontend
 
@@ -63,5 +66,8 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 (Project Scaffolding & Conventions) complete. See
-[docs/outline.md](docs/outline.md) for what's next.
+Section 1 (Project Scaffolding & Conventions) implemented and reviewed;
+CI now also runs a production frontend build and an Alembic-against-real-MySQL
+connectivity smoke test, not just lint/unit tests. A few architectural
+decisions are still open before Section 2 starts — see "Open questions"
+in [docs/outline.md](docs/outline.md).

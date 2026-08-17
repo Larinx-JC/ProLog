@@ -1,9 +1,10 @@
 """Application configuration loaded from environment variables / .env."""
 
 from functools import lru_cache
+from typing import Annotated
 
 from pydantic import field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -19,7 +20,11 @@ class Settings(BaseSettings):
     app_env: str = "development"
     secret_key: str = "change-me"
     database_url: str = "mysql+pymysql://prolog:prolog@localhost:3306/prolog"
-    cors_origins: list[str] = ["http://localhost:5173"]
+    # NoDecode stops pydantic-settings from JSON-decoding the raw env string
+    # before our validator runs (list fields are auto-JSON-decoded by
+    # default, so a plain comma-separated value would fail with a
+    # SettingsError before _split_csv ever saw it).
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:5173"]
 
     @field_validator("cors_origins", mode="before")
     @classmethod

@@ -26,6 +26,19 @@ jobs:
   backend-tests:
     name: backend-tests
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: prolog_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
       - name: Detect backend project
@@ -35,14 +48,27 @@ jobs:
         if: steps.detect.outputs.present == 'true'
         with:
           python-version: "3.12"
-      - name: Install & test
+      - name: Install (locked deps)
         if: steps.detect.outputs.present == 'true'
         working-directory: backend
         run: |
-          pip install -e ".[dev]"
+          pip install -r requirements-lock.txt
+          pip install -e . --no-deps
+      - name: Lint, type-check, unit test
+        if: steps.detect.outputs.present == 'true'
+        working-directory: backend
+        run: |
           ruff check .
           mypy app
           pytest --cov
+      - name: Alembic connectivity smoke test
+        if: steps.detect.outputs.present == 'true'
+        working-directory: backend
+        env:
+          DATABASE_URL: mysql+pymysql://root@127.0.0.1:3306/prolog_test
+        run: |
+          alembic upgrade head
+          alembic downgrade base
       - name: No backend yet
         if: steps.detect.outputs.present == 'false'
         run: echo "backend/ not present yet — nothing to test"
@@ -68,6 +94,7 @@ jobs:
           npm ci
           npm run lint
           npm test -- --run
+          npm run build
       - name: No frontend yet
         if: steps.detect.outputs.present == 'false'
         run: echo "frontend/ not present yet — nothing to test"
