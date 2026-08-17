@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No merge-conflict markers
+        run: |
+          if grep -RIn --exclude-dir=.git -E '^(<<<<<<<|=======|>>>>>>>)' .; then
+            echo "Merge conflict markers found"; exit 1
+          fi
+      - name: No trailing whitespace
+        run: |
+          if grep -RIn --exclude-dir=.git --exclude-dir=node_modules -P '[ \t]+$' . ; then
+            echo "Trailing whitespace found"; exit 1
+          fi
+
+  backend-tests:
+    name: backend-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect backend project
+        id: detect
+        run: echo "present=$( [ -f backend/pyproject.toml ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        if: steps.detect.outputs.present == 'true'
+        with:
+          python-version: "3.12"
+      - name: Install & test
+        if: steps.detect.outputs.present == 'true'
+        working-directory: backend
+        run: |
+          pip install -e ".[dev]"
+          ruff check .
+          pytest --cov
+      - name: No backend yet
+        if: steps.detect.outputs.present == 'false'
+        run: echo "backend/ not present yet — nothing to test"
+
+  frontend-tests:
+    name: frontend-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect frontend project
+        id: detect
+        run: echo "present=$( [ -f frontend/package.json ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.present == 'true'
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install & test
+        if: steps.detect.outputs.present == 'true'
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run lint
+          npm test -- --run
+      - name: No frontend yet
+        if: steps.detect.outputs.present == 'false'
+        run: echo "frontend/ not present yet — nothing to test"
