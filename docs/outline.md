@@ -1,6 +1,6 @@
 # Project Outline
 
-Agreed stack: **Python + FastAPI** backend, **MySQL/MariaDB**, **React + TypeScript**
+Agreed stack: **Python + FastAPI** backend, **MySQL 8.4 LTS**, **React + TypeScript**
 frontend, **VPN-only** remote access. Each section below is implemented on its own
 branch/PR and only starts once verified by the project owner.
 
@@ -8,10 +8,13 @@ branch/PR and only starts once verified by the project owner.
    pytest/vitest harnesses, linting, dev run instructions.
 2. **Data Model & Database Schema** — SQLAlchemy models (Users, Roles, Materials,
    Runs, Measurements, ReviewRecords, AuditLog), migrations, ER diagram. Numeric
-   fields are consistently 2-decimal fixed-point values throughout; exact
-   representation is an open question below.
-3. **Authentication & Multi-Level Authorization** — roles: **Admin** (entry + review),
-   **Operator** (entry, no review), **Reviewer** (view + export only, no entry/edit).
+   fields are exact fixed-point throughout: MySQL `DECIMAL(p,2)`, Python
+   `Decimal` (never `float`), Pydantic constrained `Decimal`.
+3. **Authentication & Multi-Level Authorization** — server-side sessions
+   (HTTP-only cookies), admin-invite-only account creation (no open
+   self-registration). Roles: **Admin** (entry + review + user/config
+   management), **Operator** (entry, no review), **Reviewer** (view + export
+   only — does not itself approve/reject; that's an Admin action).
 4. **Core Domain Logic — Run Lifecycle (OOP service layer)** — `RunService`,
    `MeasurementService`, `AbnormalityDetector`, `ReviewService`.
 5. **Backend API Layer** — REST endpoints over the Section 4 services.
@@ -40,22 +43,14 @@ branch/PR and only starts once verified by the project owner.
 Unit tests and function-level comments are produced within every section as code
 is written, not as a separate pass at the end.
 
-## Open questions before Section 2
+## Decisions locked in during Section 1 review (2026-08-17)
 
-Flagged by Section 1 review, needs the project owner's decision:
-
-- **Numeric representation**: SQL `DECIMAL` + Python `Decimal` (exact
-  fixed-point, recommended) vs. `float` rounded to 2 places (simpler, but
-  binary floats can't guarantee exact 2-decimal storage). Affects DB
-  columns, Pydantic schemas, API serialization, and frontend formatting.
-- **Database vendor/version**: repo currently says "MySQL/MariaDB" —
-  needs one specific target (e.g. MySQL 8.4 LTS) before migrations are
-  written. CI now runs against `mysql:8.4` as a working default.
-- **Reviewer role semantics**: as specified, "Reviewer" is view + export
-  only (no approve/reject), while `ReviewService.approve()/reject()` in
-  Section 4 is presumably called by Admin. Confirm this is intentional
-  (the role named "Reviewer" doesn't itself review) before Section 3.
-- **Auth mechanism**: server-side sessions vs. JWT access/refresh tokens
-  — not yet decided. Also confirm whether registration should stay
-  self-service (as in the original design mockup) or become admin-invite-
-  only, given the "permitted users only" requirement.
+- **Numeric representation**: exact fixed-point — MySQL `DECIMAL(p,2)` +
+  Python `Decimal` end to end, not `float`.
+- **Database**: MySQL 8.4 LTS specifically (not "MySQL/MariaDB"). CI's
+  `mysql:8.4` service container matches production.
+- **Reviewer role**: confirmed as view + export only by design — the name
+  doesn't imply it performs the approve/reject action, Admin does.
+- **Auth**: server-side sessions (HTTP-only cookies), not JWT. Accounts
+  are admin-invite-only — no open self-registration, unlike the original
+  design mockup's Login/Register screen.

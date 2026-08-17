@@ -7,7 +7,7 @@ authorized users can reach it remotely over VPN only.
 ## Stack
 
 - **Backend:** Python + FastAPI
-- **Database:** MySQL/MariaDB
+- **Database:** MySQL 8.4 LTS
 - **Frontend:** React + TypeScript
 - **Remote access:** VPN only (no public internet exposure)
 
@@ -19,7 +19,10 @@ authorized users can reach it remotely over VPN only.
 3. **Review and close** the run (separate queues for normal vs. abnormal runs)
 
 Plus: cross-cutting search (by attribute/date) and export (Excel/PDF) over
-all run and measurement data, and a role system (Admin / Operator / Reviewer).
+all run and measurement data, and a role system — **Admin** (entry, review,
+user/config management), **Operator** (entry only), **Reviewer** (view +
+export only). Accounts are admin-invite-only; there's no open
+self-registration.
 
 ## Repository layout
 
@@ -66,8 +69,9 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 (Project Scaffolding & Conventions) implemented and reviewed;
-CI now also runs a production frontend build and an Alembic-against-real-MySQL
-connectivity smoke test, not just lint/unit tests. A few architectural
-decisions are still open before Section 2 starts — see "Open questions"
-in [docs/outline.md](docs/outline.md).
+Section 1 (Project Scaffolding & Conventions) implemented, reviewed, and
+verified: CI runs a production frontend build and an Alembic-against-real-
+MySQL connectivity smoke test, not just lint/unit tests. All open
+architectural questions from review are resolved — see "Decisions locked
+in" in [docs/outline.md](docs/outline.md). Awaiting sign-off to start
+Section 2.
