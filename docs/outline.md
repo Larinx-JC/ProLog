@@ -6,13 +6,14 @@ branch/PR and only starts once verified by the project owner.
 
 1. **Project Scaffolding & Conventions** — repo layout, FastAPI skeleton, Alembic,
     pytest/vitest harnesses, linting, dev run instructions.
-  2. **Data Model & Database Schema** — SQLAlchemy models (Users, Roles, Materials,
-    Runs, Measurements, ReviewRecords, AuditLog), migrations, ER diagram. Numeric
-    fields are exact fixed-point throughout: MySQL `DECIMAL(p,2)`, Python
-    `Decimal` (never `float`). Reserve room on Measurement/Run for the
-    Section 8 ingestion portal (source type, external source id, import
-    batch id, source/received timestamps, dedup key, ingestion status) so
-    automated input doesn't force a later schema redesign.
+  2. **Data Model & Database Schema** — SQLAlchemy models (Role, User, Material,
+    Run, Measurement, AuditLog), migrations, ER diagram. Numeric fields are
+    exact fixed-point throughout: MySQL `DECIMAL(10,2)`, Python `Decimal`
+    (never `float`). Review outcome lives inline on Run (no separate
+    ReviewRecord table). Adds one `entry_method` column on Measurement
+    (manual/automated) as the minimal hook for the Section 8 ingestion
+    portal, rather than a fuller speculative field set. Full schema, ER
+    diagram, and run state machine: `docs/data-model.md`.
   3. **Authentication & Multi-Level Authorization** — server-side sessions
     (HTTP-only cookies), admin-invite-only account creation (no open
     self-registration). Roles: **Admin** (entry + review + user/config
@@ -58,3 +59,33 @@ is written, not as a separate pass at the end.
 - **Auth**: server-side sessions (HTTP-only cookies), not JWT. Accounts
   are admin-invite-only — no open self-registration, unlike the original
   design mockup's Login/Register screen.
+
+## Decisions locked in during Section 2 review (2026-08-17)
+
+- **Role**: normalized table + FK (not an enum column on User).
+- **Review history**: inline fields on Run, no separate ReviewRecord table
+  — a reviewed run's decision is final, no reopening.
+- **Ingestion prep**: light touch — one `entry_method` column on
+  Measurement (manual/automated), not the fuller speculative field set.
+- **No closed-without-review path** — every run reaches its terminal
+  state through review. See `docs/data-model.md` for the full state
+  machine.
+
+## Outline gap found while reading the mockup's actual logic (not just markup)
+
+The design's `<script>` section (previously unread — only the template
+markup had been reviewed) revealed real scope not yet reflected in
+Sections 9–14 above:
+
+- A **Materials standards management screen** (list/add/edit/deactivate
+  Material, including its abnormality-detection rules) — no frontend
+  section currently covers this.
+- An **audit log viewer screen** (the AuditLog data Section 2 now
+  models) — likewise uncovered.
+- A second **daily-report export mode** (date + format, with a
+  total/reviewed/abnormal/measurement-row summary) distinct from the
+  filtered-runs export Section 14 already covers.
+
+Not restructuring the section list unilaterally — flagging for the
+project owner to decide where these land (new sections vs. folded into
+existing ones) before Section 9 starts.

@@ -4,12 +4,11 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config, pool
 
+# Registers every model on Base.metadata so autogenerate can see them.
+import app.models  # noqa: E402,F401
 from alembic import context
 from app.core.config import escape_for_configparser, get_settings
 from app.db.session import Base
-
-# Import ORM models here as they're added, so autogenerate can see them, e.g.:
-# from app.models import measurement, run, user  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:
