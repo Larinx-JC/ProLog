@@ -43,3 +43,14 @@ def get_settings() -> Settings:
     get a fresh read by calling get_settings.cache_clear() first.
     """
     return Settings()
+
+
+def escape_for_configparser(value: str) -> str:
+    """Double every "%" so a configparser-backed tool (Alembic's alembic.ini)
+    doesn't treat it as interpolation syntax.
+
+    A percent-encoded URL component — e.g. a password containing "%40" for
+    "@" — otherwise raises ValueError the next time the value is read back
+    via configparser's .get()/.get_section().
+    """
+    return value.replace("%", "%%")

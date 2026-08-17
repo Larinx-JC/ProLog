@@ -1,8 +1,10 @@
 """Unit tests for app.core.config."""
 
+from configparser import ConfigParser
+
 import pytest
 
-from app.core.config import Settings, get_settings
+from app.core.config import Settings, escape_for_configparser, get_settings
 
 
 def test_get_settings_is_cached() -> None:
@@ -40,3 +42,33 @@ def test_cors_origins_csv_parsed_from_real_env_var(monkeypatch: pytest.MonkeyPat
     monkeypatch.setenv("CORS_ORIGINS", "http://a.test, http://b.test")
     settings = Settings()
     assert settings.cors_origins == ["http://a.test", "http://b.test"]
+
+
+def test_escape_for_configparser_survives_percent_encoded_password() -> None:
+    """A DATABASE_URL with a percent-encoded password (e.g. '%40' for '@')
+    must round-trip unchanged through a real configparser set/get cycle.
+
+    Alembic stores sqlalchemy.url via configparser, whose BasicInterpolation
+    treats a lone "%" as the start of a %(name)s reference and raises
+    ValueError unless it's escaped to "%%" first — this is what Alembic's
+    env.py relies on escape_for_configparser() to do.
+    """
+    raw_url = "mysql+pymysql://user:p%40ss@localhost/db"
+
+    parser = ConfigParser()
+    parser.add_section("alembic")
+    parser.set("alembic", "sqlalchemy.url", escape_for_configparser(raw_url))
+
+    assert parser.get("alembic", "sqlalchemy.url") == raw_url
+
+
+def test_escape_for_configparser_leaves_plain_url_unchanged() -> None:
+    """A URL with no "%" should pass through both the escape and a
+    configparser round-trip unchanged."""
+    raw_url = "mysql+pymysql://prolog:prolog@localhost:3306/prolog"
+
+    parser = ConfigParser()
+    parser.add_section("alembic")
+    parser.set("alembic", "sqlalchemy.url", escape_for_configparser(raw_url))
+
+    assert parser.get("alembic", "sqlalchemy.url") == raw_url
