@@ -18,8 +18,8 @@ authorized users can reach it remotely over VPN only.
    abnormality detection against the material's standard value
 3. **Review and close** the run (separate queues for normal vs. abnormal runs)
 
-Plus: cross-cutting search (by attribute/date) and export (Excel/PDF) over
-all run and measurement data, and a role system — **Admin** (entry, review,
+Plus: cross-cutting search (by attribute/date) and export (CSV/Excel/PDF)
+over all run and measurement data, and a role system — **Admin** (entry, review,
 user/config management), **Operator** (entry only), **Reviewer** (view +
 export only). Accounts are admin-invite-only; there's no open
 self-registration.
