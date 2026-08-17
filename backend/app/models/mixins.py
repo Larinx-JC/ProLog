@@ -3,7 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Numeric
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.time import utcnow
@@ -48,3 +48,27 @@ class AbnormalityRulesMixin:
     deviation_pct_threshold: Mapped[Decimal] = mapped_column(_DECIMAL)
     thickness_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
     limits_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+def abnormality_rule_constraints(table_name: str) -> tuple[CheckConstraint, ...]:
+    """CHECK constraints enforcing internally-consistent abnormality
+    rules, shared by materials (live) and runs (snapshotted) since both
+    use AbnormalityRulesMixin.
+
+    Called explicitly from each model's __table_args__ (rather than via
+    a mixin-level @declared_attr __table_args__) to keep combining them
+    with a model's own additional constraints straightforward. MySQL
+    requires CHECK constraint names to be unique per-database, not just
+    per-table, hence the table_name prefix.
+    """
+    return (
+        CheckConstraint(
+            "lower_limit <= upper_limit", name=f"ck_{table_name}_limits_order"
+        ),
+        CheckConstraint(
+            "thickness_min <= thickness_max", name=f"ck_{table_name}_thickness_order"
+        ),
+        CheckConstraint(
+            "deviation_pct_threshold >= 0", name=f"ck_{table_name}_deviation_nonneg"
+        ),
+    )

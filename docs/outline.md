@@ -120,3 +120,40 @@ existing ones) before Section 9 starts.
   integers in code, the docs just didn't say so.
 - **Indexing for Search recorded as an explicit Section 6 dependency**
   (not implemented yet) — see `docs/data-model.md`.
+
+## Section 2 second-round review findings, fixed (2026-08-17)
+
+- **`pending_from` now has a CHECK constraint restricting it to
+  active/abnormal/NULL.** The column has to share `RunStatus`'s full
+  enum type (it stores one of that same set of values), so without this
+  constraint `pending_from='reviewed'` was silently accepted despite
+  being nonsensical — confirmed by a test that assigns
+  `RunStatus.REVIEWED` (a legitimate enum member, so it passes
+  `sa_enum`'s validation) and checks the DB itself now rejects it.
+- **Structural CHECK constraints added** on both `materials` and `runs`
+  (sharing `AbnormalityRulesMixin`, so declared once via
+  `abnormality_rule_constraints()` and applied to both tables — MySQL
+  requires constraint names unique per-database, not per-table, hence
+  the table-name-prefixed names): `lower_limit <= upper_limit`,
+  `thickness_min <= thickness_max`, `deviation_pct_threshold >= 0`, plus
+  `runs.interval_seconds > 0` and `runs.end_time >= start_time`.
+  Verified SQLite enforces CHECK constraints by default (unlike foreign
+  keys, which needed an explicit pragma).
+- **Status-conditional invariants deliberately left to Section 4**, not
+  encoded as CHECK constraints: e.g. `status=reviewed` implying
+  `reviewed_by`/`review_resolution`/`reviewed_at` are set, or
+  `status=active` implying they aren't. These are workflow transitions
+  owned by `RunService`/`ReviewService` (the sole writers of those
+  columns) and are better tested comprehensively there than encoded as
+  CHECK expressions that would need a migration every time the state
+  machine evolves. Documented directly in `Run`'s docstring so this
+  reads as a decision, not an oversight.
+- **Migration seed data is now actually verified in CI** — the existing
+  `test_role_seed_values_are_distinct` unit test only proved Role *can*
+  hold three distinct rows; it never touched the migration's own
+  `op.bulk_insert`, so a typo'd or dropped seed would have gone
+  uncaught. Added `backend/scripts/verify_seed_data.py`, run in CI
+  between `alembic upgrade head` and `alembic downgrade base`, asserting
+  the exact seeded codes and UTF-8 display names. Verified the script
+  both passes on correct data and fails on deliberately corrupted data
+  before trusting it in CI.

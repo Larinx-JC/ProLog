@@ -264,6 +264,146 @@ def test_measurement_rejects_invalid_run_id(db_session: Session, run: Run) -> No
         db_session.commit()
 
 
+def test_material_rejects_lower_limit_above_upper_limit(db_session: Session) -> None:
+    """A material whose lower_limit exceeds its upper_limit is a
+    structurally broken rule -- abnormality checks against it would be
+    unsatisfiable (or worse, silently backwards). Rejected regardless of
+    what Section 4's services intend to do with it."""
+    db_session.add(
+        Material(
+            material_no="M-BAD-LIMITS",
+            standard_value=Decimal("100.00"),
+            upper_limit=Decimal("90.00"),
+            lower_limit=Decimal("110.00"),
+            thickness_min=Decimal("5.00"),
+            thickness_max=Decimal("7.00"),
+            deviation_pct_threshold=Decimal("5.00"),
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_run_rejects_lower_limit_above_upper_limit(
+    db_session: Session, material: Material, user: User
+) -> None:
+    """The same constraint must exist on runs, not just materials --
+    they share AbnormalityRulesMixin's fields but are separate tables
+    with separately-declared constraints (see
+    app.models.mixins.abnormality_rule_constraints)."""
+    db_session.add(
+        Run(
+            run_code="RUN-BAD-LIMITS",
+            material_id=material.id,
+            standard_value=material.standard_value,
+            upper_limit=Decimal("90.00"),
+            lower_limit=Decimal("110.00"),
+            thickness_min=material.thickness_min,
+            thickness_max=material.thickness_max,
+            deviation_pct_threshold=material.deviation_pct_threshold,
+            raw_material_batch="B-1",
+            interval_seconds=60,
+            start_time=datetime(2026, 3, 9, 8, 0, 0),
+            created_by_id=user.id,
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_material_rejects_thickness_min_above_max(db_session: Session) -> None:
+    """thickness_min above thickness_max is the same class of structurally
+    broken rule as lower_limit > upper_limit."""
+    db_session.add(
+        Material(
+            material_no="M-BAD-THICKNESS",
+            standard_value=Decimal("100.00"),
+            upper_limit=Decimal("105.00"),
+            lower_limit=Decimal("95.00"),
+            thickness_min=Decimal("9.00"),
+            thickness_max=Decimal("7.00"),
+            deviation_pct_threshold=Decimal("5.00"),
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_material_rejects_negative_deviation_threshold(db_session: Session) -> None:
+    """A negative deviation_pct_threshold is meaningless -- percentages
+    below zero don't correspond to any real tolerance."""
+    db_session.add(
+        Material(
+            material_no="M-BAD-DEVIATION",
+            standard_value=Decimal("100.00"),
+            upper_limit=Decimal("105.00"),
+            lower_limit=Decimal("95.00"),
+            thickness_min=Decimal("5.00"),
+            thickness_max=Decimal("7.00"),
+            deviation_pct_threshold=Decimal("-1.00"),
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_run_rejects_zero_or_negative_interval_seconds(
+    db_session: Session, material: Material, user: User
+) -> None:
+    """A measurement interval of zero or negative seconds can't drive any
+    real monitoring cadence."""
+    db_session.add(
+        Run(
+            run_code="RUN-BAD-INTERVAL",
+            material_id=material.id,
+            standard_value=material.standard_value,
+            upper_limit=material.upper_limit,
+            lower_limit=material.lower_limit,
+            thickness_min=material.thickness_min,
+            thickness_max=material.thickness_max,
+            deviation_pct_threshold=material.deviation_pct_threshold,
+            raw_material_batch="B-1",
+            interval_seconds=0,
+            start_time=datetime(2026, 3, 9, 8, 0, 0),
+            created_by_id=user.id,
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_run_pending_from_rejects_values_outside_active_or_abnormal(
+    db_session: Session, run: Run
+) -> None:
+    """pending_from is documented (docs/data-model.md) as only ever being
+    active/abnormal/NULL, but the column type is the full RunStatus enum
+    (it has to match `status`'s type). REVIEWED is a perfectly valid
+    RunStatus member -- it passes app.models.enums.sa_enum's
+    validate_strings check -- so only this table-level CHECK constraint
+    stops "pending review from reviewed" from being nonsense that's
+    silently accepted."""
+    run.pending_from = RunStatus.REVIEWED
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_run_pending_from_allows_null(run: Run) -> None:
+    """Sanity check that the pending_from CHECK constraint's `IS NULL OR
+    ...` clause doesn't itself break the common case: a fresh active run
+    with no pending_from set yet."""
+    assert run.pending_from is None
+
+
+def test_run_rejects_end_time_before_start_time(db_session: Session, run: Run) -> None:
+    """A run's end_time can never precede its start_time -- this is a
+    structural invariant true regardless of workflow, unlike e.g.
+    "status=reviewed implies reviewed_by is set", which is a workflow
+    transition left to Section 4's services (see Run's docstring)."""
+    run.end_time = run.start_time.replace(hour=run.start_time.hour - 1)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
 def test_role_seed_values_are_distinct(db_session: Session) -> None:
     """Admin/Operator/Reviewer must be three genuinely distinct rows --
     a typo that collides two codes would silently merge two privilege

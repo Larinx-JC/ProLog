@@ -62,7 +62,7 @@ erDiagram
         string raw_material_batch
         int interval_seconds
         enum status "active/abnormal/pending_review/reviewed"
-        enum pending_from "nullable: active or abnormal"
+        enum pending_from "nullable: active or abnormal (CHECK-enforced)"
         datetime start_time "UTC, app-set"
         datetime end_time "nullable, UTC"
         int created_by_id FK
@@ -165,6 +165,35 @@ terminal state (`Reviewed`) through review. `review_resolution` is
   and before/after are free text rather than structured per-field diffs,
   matching the original design's simple audit trail.
 
+## Constraints
+
+Beyond FKs/uniqueness, CHECK constraints enforce structural invariants
+that are true regardless of workflow (`app.models.mixins.
+abnormality_rule_constraints`, shared by `materials` and `runs` since
+both use `AbnormalityRulesMixin` — declared once, applied to both
+tables; MySQL requires constraint names unique per-database, so each
+name is table-prefixed):
+
+- `lower_limit <= upper_limit`
+- `thickness_min <= thickness_max`
+- `deviation_pct_threshold >= 0`
+- `runs.interval_seconds > 0`
+- `runs.pending_from IS NULL OR pending_from IN ('active', 'abnormal')`
+  — `pending_from` has to share `status`'s full `RunStatus` column type,
+  so without this the DB would otherwise silently accept e.g.
+  `pending_from='reviewed'`, which is a legitimate enum member but
+  nonsensical here.
+- `runs.end_time IS NULL OR end_time >= start_time`
+
+**Deliberately not** database constraints: status-conditional
+invariants like "`status=reviewed` implies `reviewed_by`/
+`review_resolution`/`reviewed_at` are set" or "`status=active` implies
+they aren't." These are workflow transitions, not static row shape, and
+belong to Section 4's `RunService`/`ReviewService` — the sole writers of
+those columns — tested comprehensively there rather than duplicated as
+CHECK expressions that would need a migration every time the state
+machine evolves.
+
 ## Time policy
 
 Every timestamp column is a naive `DATETIME` (no timezone) that
@@ -211,3 +240,10 @@ via CI's Alembic smoke test. Enum values are inlined as literals in the
 migration rather than imported from `app.models.enums`, since migrations
 are a frozen historical record and should not silently drift if an enum
 changes in a later migration.
+
+The migration's seeded role data (admin/operator/reviewer) is verified
+against the real, migrated database by `backend/scripts/
+verify_seed_data.py`, run in CI between `alembic upgrade head` and
+`alembic downgrade base` — not just by a unit test that only proves the
+`Role` model *can* hold three distinct rows without ever touching what
+the migration itself inserted.

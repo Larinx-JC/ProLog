@@ -3,12 +3,12 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import CheckConstraint, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.enums import ReviewResolution, RunStatus, sa_enum
-from app.models.mixins import AbnormalityRulesMixin, TimestampMixin
+from app.models.mixins import AbnormalityRulesMixin, TimestampMixin, abnormality_rule_constraints
 
 if TYPE_CHECKING:
     from app.models.material import Material
@@ -33,9 +33,33 @@ class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     created_at/updated_at from TimestampMixin) are naive datetimes that
     represent UTC by convention -- see app.core.time and
     docs/data-model.md's time policy.
+
+    __table_args__ enforces the structural invariants that are always
+    true regardless of workflow (valid rule ranges, end_time can't
+    precede start_time, pending_from can only be active/abnormal).
+    Status-conditional invariants -- e.g. status=reviewed implies
+    reviewed_by/review_resolution/reviewed_at are set, status=active
+    implies they aren't, pending_from is only set once a run has entered
+    PENDING_REVIEW -- are deliberately NOT database constraints. They're
+    workflow transitions, not static row shape, and belong to Section
+    4's RunService/ReviewService (the sole writers of these columns),
+    tested comprehensively there rather than duplicated as increasingly
+    complex CHECK expressions here that would need a migration every
+    time the state machine evolves.
     """
 
     __tablename__ = "runs"
+    __table_args__ = (
+        *abnormality_rule_constraints("runs"),
+        CheckConstraint("interval_seconds > 0", name="ck_runs_interval_positive"),
+        CheckConstraint(
+            "pending_from IS NULL OR pending_from IN ('active', 'abnormal')",
+            name="ck_runs_pending_from_valid",
+        ),
+        CheckConstraint(
+            "end_time IS NULL OR end_time >= start_time", name="ck_runs_end_after_start"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     run_code: Mapped[str] = mapped_column(String(64), unique=True, index=True)

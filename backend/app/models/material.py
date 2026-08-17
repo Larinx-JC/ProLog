@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
-from app.models.mixins import AbnormalityRulesMixin, TimestampMixin
+from app.models.mixins import AbnormalityRulesMixin, TimestampMixin, abnormality_rule_constraints
 
 
 class Material(TimestampMixin, AbnormalityRulesMixin, Base):
@@ -18,6 +18,7 @@ class Material(TimestampMixin, AbnormalityRulesMixin, Base):
     """
 
     __tablename__ = "materials"
+    __table_args__ = abnormality_rule_constraints("materials")
 
     id: Mapped[int] = mapped_column(primary_key=True)
     material_no: Mapped[str] = mapped_column(String(50), unique=True, index=True)

@@ -15,7 +15,10 @@ authorized users can reach it remotely over VPN only.
 
 1. **Enter** a new run
 2. **Record** measurements while the run is active, with automatic
-   abnormality detection against the material's standard value
+   abnormality detection against the material's full rule set (standard
+   value, upper/lower limits, thickness bounds, deviation threshold) —
+   snapshotted onto the run at creation, so a later edit to the
+   material's rules never changes how an existing run is judged
 3. **Review and close** the run (separate queues for normal vs. abnormal runs)
 
 Plus: cross-cutting search (by attribute/date) and export (CSV/Excel/PDF)
@@ -69,9 +72,11 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 (Project Scaffolding & Conventions) implemented, reviewed, and
-verified: CI runs a production frontend build and an Alembic-against-real-
-MySQL connectivity smoke test, not just lint/unit tests. All open
-architectural questions from review are resolved — see "Decisions locked
-in" in [docs/outline.md](docs/outline.md). Awaiting sign-off to start
-Section 2.
+Section 1 (Project Scaffolding & Conventions) verified and merged.
+
+Section 2 (Data Model & Database Schema) implemented and reviewed —
+Role/User/Material/Run/Measurement/AuditLog models, migration verified
+against real MySQL 8.4 (schema, CHECK constraints, and seeded reference
+data all checked in CI), 100% test coverage. Awaiting sign-off; see
+`docs/data-model.md` for the schema and `docs/outline.md` for decisions
+locked in during review.

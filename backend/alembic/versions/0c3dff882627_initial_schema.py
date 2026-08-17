@@ -84,6 +84,13 @@ def upgrade() -> None:
         sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.true()),
         sa.Column("created_at", sa.DateTime, nullable=False),
         sa.Column("updated_at", sa.DateTime, nullable=False),
+        sa.CheckConstraint("lower_limit <= upper_limit", name="ck_materials_limits_order"),
+        sa.CheckConstraint(
+            "thickness_min <= thickness_max", name="ck_materials_thickness_order"
+        ),
+        sa.CheckConstraint(
+            "deviation_pct_threshold >= 0", name="ck_materials_deviation_nonneg"
+        ),
     )
     op.create_index("ix_materials_material_no", "materials", ["material_no"], unique=True)
 
@@ -124,6 +131,17 @@ def upgrade() -> None:
         sa.Column("reviewed_at", sa.DateTime, nullable=True),
         sa.Column("created_at", sa.DateTime, nullable=False),
         sa.Column("updated_at", sa.DateTime, nullable=False),
+        sa.CheckConstraint("lower_limit <= upper_limit", name="ck_runs_limits_order"),
+        sa.CheckConstraint("thickness_min <= thickness_max", name="ck_runs_thickness_order"),
+        sa.CheckConstraint("deviation_pct_threshold >= 0", name="ck_runs_deviation_nonneg"),
+        sa.CheckConstraint("interval_seconds > 0", name="ck_runs_interval_positive"),
+        sa.CheckConstraint(
+            "pending_from IS NULL OR pending_from IN ('active', 'abnormal')",
+            name="ck_runs_pending_from_valid",
+        ),
+        sa.CheckConstraint(
+            "end_time IS NULL OR end_time >= start_time", name="ck_runs_end_after_start"
+        ),
     )
     op.create_index("ix_runs_run_code", "runs", ["run_code"], unique=True)
 
