@@ -1,24 +1,28 @@
 # Workflow
 
-This project uses **GitHub Flow** with a protected `main` branch.
+This project follows **GitHub Flow** in spirit, adapted for a solo developer
+on a free-tier private repo (GitHub-enforced branch protection needs GitHub
+Pro or an org on a private repo, and GitHub won't let you approve your own
+PR anyway — see the repo's own "Skip enforced protection for now" decision).
+Nothing below is technically blocked by GitHub; it's the process we're
+choosing to follow by discipline.
 
 ## Branching
 
-- `main` is always deployable and is protected: no direct pushes, no
-  force-pushes, no deletion.
-- All work happens on a short-lived feature branch cut from `main`:
+- `main` is meant to always be deployable.
+- Work happens on a short-lived feature branch cut from `main`:
   `section/<n>-<slug>`, e.g. `section/02-data-model`.
-- One feature branch per outline section (see project outline in the
-  original planning conversation / `docs/outline.md` once added).
+- One feature branch per outline section (see `docs/outline.md`).
+- Direct pushes to `main` are discouraged but not technically blocked.
 
 ## Pull requests
 
-- Every change to `main` goes through a PR.
-- A PR requires:
-  - At least 1 approving review.
-  - All required CI checks passing (lint, backend tests, frontend tests —
-    see `.github/workflows/ci.yml`).
-  - Branch up to date with `main` before merge.
+- Every change lands via a PR — this is a self-review record (a chance to
+  read the diff as a whole and let CI run) rather than an approval gate.
+- No independent approving review is required while there's a single
+  developer on the project.
+- All CI checks must pass (lint, backend-tests, frontend-tests — see
+  `.github/workflows/ci.yml`) before merging.
 - Prefer squash-merge so `main` history reads one commit per logical change.
 
 ## Commits
@@ -31,5 +35,6 @@ This project uses **GitHub Flow** with a protected `main` branch.
 
 - Every non-trivial function gets a unit test and a short comment
   explaining *why* (not what) where it isn't obvious from the code itself.
-- Numeric fields are consistently 2-decimal floats end to end (DB, API,
-  UI) — see `docs/data-types.md` once Section 2 lands.
+- Numeric fields are consistently 2-decimal fixed-point values end to end:
+  MySQL `DECIMAL(p,2)`, Python `Decimal` (never `float`), Pydantic
+  constrained `Decimal` — see `docs/outline.md`.
