@@ -23,6 +23,9 @@ class Measurement(Base):
     average_value/max_deviation/deviation_percent are computed (from
     point_1..point_4) when the row is marked complete, not entered
     directly -- see the Section 4 AbnormalityDetector.
+
+    measurement_time/recorded_at are naive datetimes representing UTC by
+    convention -- see app.core.time / docs/data-model.md.
     """
 
     __tablename__ = "measurements"

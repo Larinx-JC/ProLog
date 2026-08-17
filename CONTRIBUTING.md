@@ -35,6 +35,8 @@ choosing to follow by discipline.
 
 - Every non-trivial function gets a unit test and a short comment
   explaining *why* (not what) where it isn't obvious from the code itself.
-- Numeric fields are consistently 2-decimal fixed-point values end to end:
-  MySQL `DECIMAL(p,2)`, Python `Decimal` (never `float`), Pydantic
-  constrained `Decimal` — see `docs/outline.md`.
+- Measured physical quantities and calculated numeric results are
+  consistently 2-decimal fixed-point values end to end: MySQL
+  `DECIMAL(10,2)`, Python `Decimal` (never `float`), Pydantic constrained
+  `Decimal`. Identifiers, counts, and whole-second intervals use plain
+  integers instead — see `docs/data-model.md`.

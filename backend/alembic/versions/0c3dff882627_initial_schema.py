@@ -56,14 +56,11 @@ def upgrade() -> None:
         sa.Column(
             "must_change_password", sa.Boolean, nullable=False, server_default=sa.true()
         ),
-        sa.Column("created_at", sa.DateTime, server_default=sa.func.now(), nullable=False),
-        sa.Column(
-            "updated_at",
-            sa.DateTime,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-            nullable=False,
-        ),
+        # created_at/updated_at have no server_default: the app always
+        # supplies app.core.time.utcnow() explicitly (see TimestampMixin),
+        # so correctness doesn't depend on the MySQL server's timezone.
+        sa.Column("created_at", sa.DateTime, nullable=False),
+        sa.Column("updated_at", sa.DateTime, nullable=False),
     )
     op.create_index("ix_users_account", "users", ["account"], unique=True)
 
@@ -85,14 +82,8 @@ def upgrade() -> None:
         ),
         sa.Column("limits_check_enabled", sa.Boolean, nullable=False, server_default=sa.true()),
         sa.Column("is_active", sa.Boolean, nullable=False, server_default=sa.true()),
-        sa.Column("created_at", sa.DateTime, server_default=sa.func.now(), nullable=False),
-        sa.Column(
-            "updated_at",
-            sa.DateTime,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-            nullable=False,
-        ),
+        sa.Column("created_at", sa.DateTime, nullable=False),
+        sa.Column("updated_at", sa.DateTime, nullable=False),
     )
     op.create_index("ix_materials_material_no", "materials", ["material_no"], unique=True)
 
@@ -101,7 +92,25 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer, primary_key=True),
         sa.Column("run_code", sa.String(64), nullable=False),
         sa.Column("material_id", sa.Integer, sa.ForeignKey("materials.id"), nullable=False),
+        # Full snapshot of the Material's abnormality rules at creation
+        # time (mirrors materials' rule columns above) -- always read
+        # from here, never re-looked-up from the live Material, so an
+        # edit to the material's rules can never retroactively change how
+        # this run's measurements (including ones added after the edit,
+        # while this run is still active) are judged.
         sa.Column("standard_value", _DECIMAL, nullable=False),
+        sa.Column("upper_limit", _DECIMAL, nullable=False),
+        sa.Column("lower_limit", _DECIMAL, nullable=False),
+        sa.Column("thickness_min", _DECIMAL, nullable=False),
+        sa.Column("thickness_max", _DECIMAL, nullable=False),
+        sa.Column(
+            "deviation_check_enabled", sa.Boolean, nullable=False, server_default=sa.true()
+        ),
+        sa.Column("deviation_pct_threshold", _DECIMAL, nullable=False),
+        sa.Column(
+            "thickness_check_enabled", sa.Boolean, nullable=False, server_default=sa.true()
+        ),
+        sa.Column("limits_check_enabled", sa.Boolean, nullable=False, server_default=sa.true()),
         sa.Column("raw_material_batch", sa.String(100), nullable=False),
         sa.Column("interval_seconds", sa.Integer, nullable=False),
         sa.Column("status", _RUN_STATUS, nullable=False, server_default="active"),
@@ -113,14 +122,8 @@ def upgrade() -> None:
         sa.Column("review_reason", sa.Text, nullable=True),
         sa.Column("reviewed_by_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
         sa.Column("reviewed_at", sa.DateTime, nullable=True),
-        sa.Column("created_at", sa.DateTime, server_default=sa.func.now(), nullable=False),
-        sa.Column(
-            "updated_at",
-            sa.DateTime,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-            nullable=False,
-        ),
+        sa.Column("created_at", sa.DateTime, nullable=False),
+        sa.Column("updated_at", sa.DateTime, nullable=False),
     )
     op.create_index("ix_runs_run_code", "runs", ["run_code"], unique=True)
 
@@ -150,8 +153,9 @@ def upgrade() -> None:
     op.create_table(
         "audit_logs",
         sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("occurred_at", sa.DateTime, server_default=sa.func.now(), nullable=False),
+        sa.Column("occurred_at", sa.DateTime, nullable=False),
         sa.Column("actor_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
+        sa.Column("action", sa.String(50), nullable=False),
         sa.Column("target_type", sa.String(50), nullable=False),
         sa.Column("target_id", sa.Integer, nullable=True),
         sa.Column("target_label", sa.String(255), nullable=False),
@@ -159,6 +163,7 @@ def upgrade() -> None:
         sa.Column("after_value", sa.Text, nullable=True),
         sa.Column("reason", sa.Text, nullable=True),
     )
+    op.create_index("ix_audit_logs_action", "audit_logs", ["action"])
 
     # Seed the fixed role set. Users can't exist without a valid role_id,
     # so this has to land in the same migration that creates both tables.
@@ -191,6 +196,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_index("ix_audit_logs_action", table_name="audit_logs")
     op.drop_table("audit_logs")
     op.drop_table("measurements")
     op.drop_index("ix_runs_run_code", table_name="runs")

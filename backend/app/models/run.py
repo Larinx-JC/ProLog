@@ -1,28 +1,38 @@
 """Run: one production/detection run, from start through review."""
 
 from datetime import datetime
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Numeric, String, Text
+from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.enums import ReviewResolution, RunStatus, sa_enum
-from app.models.mixins import TimestampMixin
+from app.models.mixins import AbnormalityRulesMixin, TimestampMixin
 
 if TYPE_CHECKING:
     from app.models.material import Material
     from app.models.measurement import Measurement
     from app.models.user import User
 
-_DECIMAL = Numeric(10, 2)
 
-
-class Run(TimestampMixin, Base):
+class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     """One run of the detection line: created against a Material, records
     Measurements while active, and ends in REVIEWED after passing through
     review. See app.models.enums.RunStatus for the full state machine.
+
+    The AbnormalityRulesMixin fields (standard_value, upper_limit, ...)
+    are a full snapshot of the Material's rules taken at creation time --
+    always read them from THIS row (never the live Material) when judging
+    whether a measurement on this run is abnormal. Otherwise editing a
+    Material's rules mid-run would judge earlier and later measurements
+    in the same run by different rules, and a run's history could no
+    longer be reconstructed once the material moves on.
+
+    All datetime columns here (start_time, end_time, reviewed_at, plus
+    created_at/updated_at from TimestampMixin) are naive datetimes that
+    represent UTC by convention -- see app.core.time and
+    docs/data-model.md's time policy.
     """
 
     __tablename__ = "runs"
@@ -30,11 +40,6 @@ class Run(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     run_code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     material_id: Mapped[int] = mapped_column(ForeignKey("materials.id"))
-    # Snapshotted from Material.standard_value at creation time -- always
-    # read this column (never the live Material) when judging whether a
-    # measurement on THIS run is abnormal, so a later change to the
-    # material's standard can't retroactively change this run's history.
-    standard_value: Mapped[Decimal] = mapped_column(_DECIMAL)
     raw_material_batch: Mapped[str] = mapped_column(String(100))
     interval_seconds: Mapped[int] = mapped_column()
 

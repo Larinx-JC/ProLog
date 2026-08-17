@@ -64,36 +64,60 @@ def test_material_decimal_precision_survives_round_trip(db_session: Session) -> 
     assert isinstance(m.standard_value, Decimal)
 
 
-def test_run_snapshots_standard_value_independent_of_material(
+def test_run_snapshots_all_material_rules_independent_of_material(
     db_session: Session, material: Material, user: User
 ) -> None:
-    """Changing a Material's current standard_value later must NOT change
-    an already-created Run's snapshotted standard_value.
+    """Changing ANY of a Material's rule fields later must NOT change an
+    already-created Run's snapshotted copies.
 
-    This is the core correctness property that makes a separate
+    This covers every AbnormalityRulesMixin field, not just
+    standard_value: if only standard_value were snapshotted (an earlier
+    version of this model), editing e.g. upper_limit or
+    deviation_pct_threshold after a run started would judge that run's
+    later measurements by different rules than its earlier ones. This is
+    the core correctness property that makes a separate
     material-standard-version-history table unnecessary: the Run itself
-    is the historical record of what standard applied to it.
+    is the historical record of what rules applied to it.
     """
-    original_standard = material.standard_value
+    original = {
+        "standard_value": material.standard_value,
+        "upper_limit": material.upper_limit,
+        "lower_limit": material.lower_limit,
+        "thickness_min": material.thickness_min,
+        "thickness_max": material.thickness_max,
+        "deviation_check_enabled": material.deviation_check_enabled,
+        "deviation_pct_threshold": material.deviation_pct_threshold,
+        "thickness_check_enabled": material.thickness_check_enabled,
+        "limits_check_enabled": material.limits_check_enabled,
+    }
     r = Run(
         run_code="RUN-SNAPSHOT",
         material_id=material.id,
-        standard_value=material.standard_value,
         raw_material_batch="B-1",
         interval_seconds=60,
         status=RunStatus.ACTIVE,
         start_time=datetime(2026, 3, 9, 8, 0, 0),
         created_by_id=user.id,
+        **original,
     )
     db_session.add(r)
     db_session.commit()
 
     material.standard_value = Decimal("999.99")
+    material.upper_limit = Decimal("999.99")
+    material.lower_limit = Decimal("0.00")
+    material.thickness_min = Decimal("0.00")
+    material.thickness_max = Decimal("999.99")
+    material.deviation_check_enabled = not original["deviation_check_enabled"]
+    material.deviation_pct_threshold = Decimal("99.00")
+    material.thickness_check_enabled = not original["thickness_check_enabled"]
+    material.limits_check_enabled = not original["limits_check_enabled"]
     db_session.commit()
     db_session.refresh(r)
 
-    assert r.standard_value == original_standard
-    assert r.standard_value != material.standard_value
+    for field, original_value in original.items():
+        assert getattr(r, field) == original_value, f"{field} drifted from its snapshot"
+        assert getattr(r, field) != getattr(material, field), f"{field} should now differ"
 
 
 def test_run_material_and_creator_relationships(run: Run, material: Material, user: User) -> None:
@@ -170,9 +194,16 @@ def test_sa_enum_stores_string_value_not_python_member_name(db_session: Session,
 def test_audit_log_target_id_has_no_fk_constraint(db_session: Session, user: User) -> None:
     """AuditLog.target_id is intentionally polymorphic (points at whatever
     table target_type names) -- it must accept an id with no matching row
-    in any single table without raising an IntegrityError."""
+    in any single table without raising an IntegrityError.
+
+    This only actually proves something now that SQLite foreign key
+    enforcement is turned on for this fixture (see conftest.db_session) --
+    with it off, any target_id would be silently accepted regardless of
+    whether target_id had a real FK constraint or not.
+    """
     log = AuditLog(
         actor_id=user.id,
+        action="material_standard_changed",
         target_type="material",
         target_id=999999,
         target_label="物料标准 M-DOES-NOT-EXIST",
@@ -184,6 +215,53 @@ def test_audit_log_target_id_has_no_fk_constraint(db_session: Session, user: Use
     db_session.commit()  # must not raise
 
     assert log.id is not None
+
+
+def test_user_rejects_invalid_role_id(db_session: Session, admin_role: Role) -> None:
+    """A User can't reference a role_id that doesn't exist -- proves FK
+    enforcement is actually on (see conftest.db_session), not just that
+    the column exists."""
+    bogus_id = admin_role.id + 999
+    db_session.add(
+        User(name="X", account="x", password_hash="h", role_id=bogus_id)
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_run_rejects_invalid_material_id(
+    db_session: Session, material: Material, user: User
+) -> None:
+    """A Run can't reference a material_id that doesn't exist."""
+    bogus_id = material.id + 999
+    db_session.add(
+        Run(
+            run_code="RUN-BAD-MATERIAL",
+            material_id=bogus_id,
+            standard_value=material.standard_value,
+            upper_limit=material.upper_limit,
+            lower_limit=material.lower_limit,
+            thickness_min=material.thickness_min,
+            thickness_max=material.thickness_max,
+            deviation_pct_threshold=material.deviation_pct_threshold,
+            raw_material_batch="B-1",
+            interval_seconds=60,
+            start_time=datetime(2026, 3, 9, 8, 0, 0),
+            created_by_id=user.id,
+        )
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+
+
+def test_measurement_rejects_invalid_run_id(db_session: Session, run: Run) -> None:
+    """A Measurement can't reference a run_id that doesn't exist."""
+    bogus_id = run.id + 999
+    db_session.add(
+        Measurement(run_id=bogus_id, measurement_time=datetime(2026, 3, 9, 8, 0, 0))
+    )
+    with pytest.raises(IntegrityError):
+        db_session.commit()
 
 
 def test_role_seed_values_are_distinct(db_session: Session) -> None:
@@ -206,7 +284,7 @@ def test_repr_includes_a_human_identifying_field(
     """Every model's __repr__ should surface its natural identifier
     (code/account/material_no/run_code), not just <Class object at 0x...>
     -- this is what shows up in logs and debugger output."""
-    log = AuditLog(target_type="run", target_label="test", actor_id=user.id)
+    log = AuditLog(action="run_created", target_type="run", target_label="test", actor_id=user.id)
     db_session.add(log)
     db_session.flush()
     measurement = Measurement(run_id=run.id, measurement_time=run.start_time)

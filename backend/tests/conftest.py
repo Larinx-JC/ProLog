@@ -6,7 +6,7 @@ from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.db.session import Base
@@ -33,6 +33,16 @@ def db_session() -> Iterator[Session]:
     test, which is what actually runs in production.
     """
     engine = create_engine("sqlite+pysqlite:///:memory:")
+
+    # SQLite ignores foreign keys unless told otherwise per-connection --
+    # without this, an invalid FK value would be silently accepted and
+    # every foreign-key test below would be meaningless.
+    @event.listens_for(engine, "connect")
+    def _enable_sqlite_foreign_keys(dbapi_connection: object, connection_record: object) -> None:
+        cursor = dbapi_connection.cursor()  # type: ignore[attr-defined]
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     Base.metadata.create_all(engine)
     session_factory = sessionmaker(bind=engine)
     session = session_factory()
@@ -85,11 +95,21 @@ def material(db_session: Session) -> Material:
 
 @pytest.fixture
 def run(db_session: Session, material: Material, user: User) -> Run:
-    """A minimal valid, active Run."""
+    """A minimal valid, active Run, with the full abnormality-rules
+    snapshot copied from `material` at creation -- mirrors what Section
+    4's RunService will do when starting a real run."""
     r = Run(
         run_code="RUN-TEST-0001",
         material_id=material.id,
         standard_value=material.standard_value,
+        upper_limit=material.upper_limit,
+        lower_limit=material.lower_limit,
+        thickness_min=material.thickness_min,
+        thickness_max=material.thickness_max,
+        deviation_check_enabled=material.deviation_check_enabled,
+        deviation_pct_threshold=material.deviation_pct_threshold,
+        thickness_check_enabled=material.thickness_check_enabled,
+        limits_check_enabled=material.limits_check_enabled,
         raw_material_batch="B-TEST",
         interval_seconds=60,
         status=RunStatus.ACTIVE,

@@ -7,13 +7,17 @@ branch/PR and only starts once verified by the project owner.
 1. **Project Scaffolding & Conventions** — repo layout, FastAPI skeleton, Alembic,
     pytest/vitest harnesses, linting, dev run instructions.
   2. **Data Model & Database Schema** — SQLAlchemy models (Role, User, Material,
-    Run, Measurement, AuditLog), migrations, ER diagram. Numeric fields are
-    exact fixed-point throughout: MySQL `DECIMAL(10,2)`, Python `Decimal`
-    (never `float`). Review outcome lives inline on Run (no separate
-    ReviewRecord table). Adds one `entry_method` column on Measurement
-    (manual/automated) as the minimal hook for the Section 8 ingestion
-    portal, rather than a fuller speculative field set. Full schema, ER
-    diagram, and run state machine: `docs/data-model.md`.
+    Run, Measurement, AuditLog), migrations, ER diagram. Measured quantities and
+    computed results are exact fixed-point: MySQL `DECIMAL(10,2)`, Python
+    `Decimal` (never `float`); identifiers/counts/intervals are integers.
+    Review outcome lives inline on Run (no separate ReviewRecord table).
+    Run snapshots Material's *full* abnormality-rules set at creation
+    (shared `AbnormalityRulesMixin`), not just standard_value. AuditLog
+    has an indexed `action` field. Adds one `entry_method` column on
+    Measurement (manual/automated) as the minimal hook for the Section 8
+    ingestion portal, rather than a fuller speculative field set. Full
+    schema, ER diagram, run state machine, and time policy:
+    `docs/data-model.md`.
   3. **Authentication & Multi-Level Authorization** — server-side sessions
     (HTTP-only cookies), admin-invite-only account creation (no open
     self-registration). Roles: **Admin** (entry + review + user/config
@@ -50,8 +54,9 @@ is written, not as a separate pass at the end.
 
 ## Decisions locked in during Section 1 review (2026-08-17)
 
-- **Numeric representation**: exact fixed-point — MySQL `DECIMAL(p,2)` +
-  Python `Decimal` end to end, not `float`.
+- **Numeric representation**: exact fixed-point — MySQL `DECIMAL(10,2)` +
+  Python `Decimal`, not `float`, for measured quantities and computed
+  results. Identifiers/counts/intervals are plain integers.
 - **Database**: MySQL 8.4 LTS specifically (not "MySQL/MariaDB"). CI's
   `mysql:8.4` service container matches production.
 - **Reviewer role**: confirmed as view + export only by design — the name
@@ -89,3 +94,29 @@ Sections 9–14 above:
 Not restructuring the section list unilaterally — flagging for the
 project owner to decide where these land (new sections vs. folded into
 existing ones) before Section 9 starts.
+
+## Section 2 implementation review findings, fixed (2026-08-17)
+
+- **Run now snapshots every `AbnormalityRulesMixin` field**, not just
+  `standard_value` — the original version would have let a mid-run edit
+  to a material's limits/thresholds judge earlier and later measurements
+  in the same run by different rules, and made a closed run's history
+  unreconstructable once its material moved on.
+- **`AuditLog.action`** added (indexed) — without it, an audit row
+  couldn't explicitly distinguish "run created" from "run reviewed" from
+  "material deactivated", etc.
+- **SQLite foreign-key enforcement enabled for the test fixture** — it's
+  off by default, so the original `AuditLog.target_id`-has-no-FK test
+  proved nothing (SQLite would have silently accepted *any* invalid FK,
+  declared or not). Confirmed by reproducing the false-pass, then adding
+  tests proving `User.role_id`/`Run.material_id`/`Measurement.run_id`
+  genuinely reject bad references.
+- **Time policy defined**: every timestamp is UTC by convention,
+  generated in application code (`app.core.time.utcnow()`) rather than
+  by the database server, specifically so correctness doesn't depend on
+  the MySQL server's timezone configuration. See `docs/data-model.md`.
+- **Numeric policy wording corrected** — "DECIMAL(10,2) everywhere" was
+  overbroad; identifiers/counts/intervals were already correctly
+  integers in code, the docs just didn't say so.
+- **Indexing for Search recorded as an explicit Section 6 dependency**
+  (not implemented yet) — see `docs/data-model.md`.
