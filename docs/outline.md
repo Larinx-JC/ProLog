@@ -9,7 +9,10 @@ branch/PR and only starts once verified by the project owner.
 2. **Data Model & Database Schema** — SQLAlchemy models (Users, Roles, Materials,
    Runs, Measurements, ReviewRecords, AuditLog), migrations, ER diagram. Numeric
    fields are exact fixed-point throughout: MySQL `DECIMAL(p,2)`, Python
-   `Decimal` (never `float`), Pydantic constrained `Decimal`.
+   `Decimal` (never `float`). Reserve room on Measurement/Run for the
+   Section 8 ingestion portal (source type, external source id, import
+   batch id, source/received timestamps, dedup key, ingestion status) so
+   automated input doesn't force a later schema redesign.
 3. **Authentication & Multi-Level Authorization** — server-side sessions
    (HTTP-only cookies), admin-invite-only account creation (no open
    self-registration). Roles: **Admin** (entry + review + user/config
@@ -25,8 +28,9 @@ branch/PR and only starts once verified by the project owner.
    into the Run/Measurement schema without touching manual-entry code paths.
    (Explicitly requested by the project owner for future robotic/automated
    detection lines; not part of the original 6-goal list, added deliberately.)
-9. **Frontend — Auth & App Shell** — login/register, auth context, role-guarded
-   routing, sidebar/header layout.
+9. **Frontend — Auth & App Shell** — login (admin-created accounts, no
+   self-registration screen), auth context, role-guarded routing,
+   sidebar/header layout.
 10. **Frontend — Overview Screen** — KPI tiles, recent runs, status distribution.
 11. **Frontend — Runs List Screen** — filterable/sortable table + filter panel
     (reused in Section 13).
