@@ -69,12 +69,17 @@ def test_timestamp_mixin_updated_at_advances_on_update(
     db_session: Session, material: Material
 ) -> None:
     """onupdate=utcnow (see TimestampMixin) must actually fire on a real
-    update -- updated_at should move forward, not stay frozen at
-    created_at. The sleep guarantees two genuinely different utcnow()
-    values regardless of clock resolution on the test machine."""
+    update -- updated_at should move forward, not stay frozen at its
+    original value. The sleep guarantees a genuinely later utcnow()
+    value regardless of clock resolution on the test machine.
+
+    created_at/updated_at are each set by their own independent utcnow()
+    call at insert time (see TimestampMixin), so they're already
+    microseconds apart on creation -- not equal -- which is why this
+    doesn't also assert they start out equal.
+    """
     original_created_at = material.created_at
     original_updated_at = material.updated_at
-    assert original_created_at == original_updated_at
 
     time.sleep(0.01)
     material.standard_value = Decimal("111.11")
