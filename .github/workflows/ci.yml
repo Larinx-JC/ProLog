@@ -67,6 +67,12 @@ jobs:
         env:
           DATABASE_URL: mysql+pymysql://root@127.0.0.1:3306/prolog_test
         run: alembic upgrade head
+      - name: Alembic check (ORM/migration drift)
+        if: steps.detect.outputs.present == 'true'
+        working-directory: backend
+        env:
+          DATABASE_URL: mysql+pymysql://root@127.0.0.1:3306/prolog_test
+        run: alembic check
       - name: Verify migration seed data
         if: steps.detect.outputs.present == 'true'
         working-directory: backend

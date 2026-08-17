@@ -19,7 +19,9 @@ authorized users can reach it remotely over VPN only.
    value, upper/lower limits, thickness bounds, deviation threshold) —
    snapshotted onto the run at creation, so a later edit to the
    material's rules never changes how an existing run is judged
-3. **Review and close** the run (separate queues for normal vs. abnormal runs)
+3. **Close the run for review**, then **record the review decision**
+   (separate queues for normal vs. abnormal runs) — see the run state
+   machine in [docs/data-model.md](docs/data-model.md)
 
 Plus: cross-cutting search (by attribute/date) and export (CSV/Excel/PDF)
 over all run and measurement data, and a role system — **Admin** (entry, review,

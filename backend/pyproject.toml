@@ -33,6 +33,9 @@ include = ["app*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+# So tests can import backend/scripts/* (a plain dev-scripts package, not
+# part of the installed app) regardless of how pytest was invoked.
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 100

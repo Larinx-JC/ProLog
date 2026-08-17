@@ -6,6 +6,7 @@ against real MySQL by CI (see .github/workflows/ci.yml), since that's
 what catches dialect-specific issues these tests can't.
 """
 
+import time
 from datetime import datetime
 from decimal import Decimal
 
@@ -62,6 +63,26 @@ def test_material_decimal_precision_survives_round_trip(db_session: Session) -> 
 
     assert m.standard_value == Decimal("122.50")
     assert isinstance(m.standard_value, Decimal)
+
+
+def test_timestamp_mixin_updated_at_advances_on_update(
+    db_session: Session, material: Material
+) -> None:
+    """onupdate=utcnow (see TimestampMixin) must actually fire on a real
+    update -- updated_at should move forward, not stay frozen at
+    created_at. The sleep guarantees two genuinely different utcnow()
+    values regardless of clock resolution on the test machine."""
+    original_created_at = material.created_at
+    original_updated_at = material.updated_at
+    assert original_created_at == original_updated_at
+
+    time.sleep(0.01)
+    material.standard_value = Decimal("111.11")
+    db_session.commit()
+    db_session.refresh(material)
+
+    assert material.created_at == original_created_at
+    assert material.updated_at > original_updated_at
 
 
 def test_run_snapshots_all_material_rules_independent_of_material(
@@ -347,11 +368,13 @@ def test_material_rejects_negative_deviation_threshold(db_session: Session) -> N
         db_session.commit()
 
 
+@pytest.mark.parametrize("bad_interval", [0, -1])
 def test_run_rejects_zero_or_negative_interval_seconds(
-    db_session: Session, material: Material, user: User
+    db_session: Session, material: Material, user: User, bad_interval: int
 ) -> None:
     """A measurement interval of zero or negative seconds can't drive any
-    real monitoring cadence."""
+    real monitoring cadence. Parameterized so "zero or negative" in the
+    test name is actually what's covered, not just zero."""
     db_session.add(
         Run(
             run_code="RUN-BAD-INTERVAL",
@@ -363,7 +386,7 @@ def test_run_rejects_zero_or_negative_interval_seconds(
             thickness_max=material.thickness_max,
             deviation_pct_threshold=material.deviation_pct_threshold,
             raw_material_batch="B-1",
-            interval_seconds=0,
+            interval_seconds=bad_interval,
             start_time=datetime(2026, 3, 9, 8, 0, 0),
             created_by_id=user.id,
         )
