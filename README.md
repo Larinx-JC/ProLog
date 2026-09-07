@@ -15,8 +15,13 @@ authorized users can reach it remotely over VPN only.
 
 1. **Enter** a new run
 2. **Record** measurements while the run is active, with automatic
-   abnormality detection against the material's standard value
-3. **Review and close** the run (separate queues for normal vs. abnormal runs)
+   abnormality detection against the material's full rule set (standard
+   value, upper/lower limits, thickness bounds, deviation threshold) —
+   snapshotted onto the run at creation, so a later edit to the
+   material's rules never changes how an existing run is judged
+3. **Close the run for review**, then **record the review decision**
+   (separate queues for normal vs. abnormal runs) — see the run state
+   machine in [docs/data-model.md](docs/data-model.md)
 
 Plus: cross-cutting search (by attribute/date) and export (CSV/Excel/PDF)
 over all run and measurement data, and a role system — **Admin** (entry, review,
@@ -29,6 +34,10 @@ self-registration.
 This repo is being built section by section against a written outline
 (see [docs/outline.md](docs/outline.md)); each section lands as its own
 PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/PR workflow.
+
+For the current handover, start with [PROJECT_STATUS.md](PROJECT_STATUS.md).
+Confirmed choices are in [docs/decisions.md](docs/decisions.md); the next
+section's checklist is [Section 3 authentication](docs/sections/03-authentication.md).
 
 ```
 backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest
@@ -69,9 +78,10 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 (Project Scaffolding & Conventions) implemented, reviewed, and
-verified: CI runs a production frontend build and an Alembic-against-real-
-MySQL connectivity smoke test, not just lint/unit tests. All open
-architectural questions from review are resolved — see "Decisions locked
-in" in [docs/outline.md](docs/outline.md). Awaiting sign-off to start
-Section 2.
+Section 1 is verified and merged. Section 2 has received owner verification
+after a full review. Section 3 authentication is authorized; see the status
+page for implementation progress and the remaining policy choices.
+
+The React application is currently a scaffold. See
+[PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,
+local verification, and remaining work.
