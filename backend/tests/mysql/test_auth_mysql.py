@@ -10,7 +10,8 @@ from alembic.autogenerate import compare_metadata
 from alembic.config import Config
 from alembic.migration import MigrationContext
 from sqlalchemy import DefaultClause, MetaData, event, func, select, text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.orm import Session
 
 from alembic import command
 from app.db.session import Base
@@ -21,6 +22,13 @@ from scripts.verify_seed_data import EXPECTED_ROLES, fetch_seeded_roles
 from tests.auth_fixtures import PASSWORD, REPLACEMENT, bootstrap_login, invite_login
 
 pytestmark = pytest.mark.mysql
+
+
+def assert_mysql_rejected(db: Session, statement: str, expected_code: int) -> None:
+    """Assert the actual MySQL constraint code; unrelated database failures cannot pass."""
+    with pytest.raises(DBAPIError) as error, db.begin_nested():
+        db.execute(text(statement))
+    assert error.value.orig.args[0] == expected_code
 
 
 def race(first, second) -> list[str]:
@@ -107,14 +115,13 @@ def test_mysql_decimal_constraints_fk_seeds_and_timestamp(mysql_auth: AuthServic
     with auth.factory() as db:
         value = db.scalar(select(Material.standard_value))
         assert value == Decimal("99999999.99") and isinstance(value, Decimal)
-        for sql in [
-            "UPDATE materials SET lower_limit=100, upper_limit=99",
-            "UPDATE materials SET thickness_min=100, thickness_max=99",
-            "UPDATE materials SET deviation_pct_threshold=-1",
-            "UPDATE users SET role_id=999999",
+        for sql, code in [
+            ("UPDATE materials SET lower_limit=100, upper_limit=99", 3819),
+            ("UPDATE materials SET thickness_min=100, thickness_max=99", 3819),
+            ("UPDATE materials SET deviation_pct_threshold=-1", 3819),
+            ("UPDATE users SET role_id=999999", 1452),
         ]:
-            with pytest.raises(IntegrityError), db.begin_nested():
-                db.execute(text(sql))
+            assert_mysql_rejected(db, sql, code)
     auth.clock.value = datetime(2026, 9, 7, 12, 0, 0, 123456)
     current = auth.current(admin.token, activity=True)
     assert current.id == admin.user.id
@@ -182,19 +189,18 @@ def test_mysql_auth_constraints_and_real_default_drift(mysql_auth: AuthService) 
     admin = bootstrap_login(auth)
     auth.invite(admin.token, "constraint.user", "Constraints", "operator")
     with auth.factory() as db:
-        for sql in [
-            "UPDATE auth_state SET id=2",
-            "UPDATE login_sessions SET expires_at=created_at",
-            "UPDATE login_sessions SET last_activity_at='2000-01-01 00:00:00'",
-            "UPDATE login_sessions SET user_id=999999",
-            "UPDATE access_grants SET purpose='unsupported'",
-            "UPDATE access_grants SET expires_at=created_at",
-            "UPDATE access_grants SET user_id=999999",
-            "UPDATE access_grants SET issued_by_id=999999",
-            "UPDATE auth_throttles SET attempts=-1",
+        for sql, code in [
+            ("UPDATE auth_state SET id=2", 3819),
+            ("UPDATE login_sessions SET expires_at=created_at", 3819),
+            ("UPDATE login_sessions SET last_activity_at='2000-01-01 00:00:00'", 3819),
+            ("UPDATE login_sessions SET user_id=999999", 1452),
+            ("UPDATE access_grants SET purpose='unsupported'", 3819),
+            ("UPDATE access_grants SET expires_at=created_at", 3819),
+            ("UPDATE access_grants SET user_id=999999", 1452),
+            ("UPDATE access_grants SET issued_by_id=999999", 1452),
+            ("UPDATE auth_throttles SET attempts=-1", 3819),
         ]:
-            with pytest.raises(IntegrityError), db.begin_nested():
-                db.execute(text(sql))
+            assert_mysql_rejected(db, sql, code)
     with auth.factory.kw["bind"].connect() as connection:
         context = MigrationContext.configure(connection, opts={"compare_server_default": True})
         assert compare_metadata(context, Base.metadata) == []

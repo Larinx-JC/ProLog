@@ -290,3 +290,54 @@ def test_session_tokens_are_new_for_each_login(auth: AuthService) -> None:
     with auth.factory() as db:
         stored = list(db.scalars(select(LoginSession.token_digest)))
         assert first.token not in stored and second.token not in stored
+
+
+def test_login_address_limit_cannot_be_bypassed_by_changing_accounts(auth: AuthService) -> None:
+    """Independent account names share the same client-address attempt budget."""
+    auth.settings.login_address_limit = 2
+    for account in ("unknown.one", "unknown.two"):
+        with pytest.raises(AuthError, match="invalid_credentials"):
+            auth.login(account, PASSWORD, "same-client")
+    with pytest.raises(AuthError, match="too_many_attempts"):
+        auth.login("unknown.three", PASSWORD, "same-client")
+    with pytest.raises(AuthError, match="invalid_credentials"):
+        auth.login("unknown.three", PASSWORD, "different-client")
+
+
+def test_grant_limit_and_window_recovery(auth: AuthService) -> None:
+    """Grant throttling survives service recreation and expires without consuming a link."""
+    admin = bootstrap_login(auth)
+    grant = auth.invite(admin.token, "limited.user", "Limited", "operator")
+    auth.settings.grant_address_limit = 2
+    for _ in range(2):
+        with pytest.raises(AuthError, match="invalid_or_expired_link"):
+            auth.consume_grant("invalid", "activation", PASSWORD, "client")
+    restarted = AuthService(auth.factory, auth.settings, auth.clock, auth.passwords)
+    with pytest.raises(AuthError, match="too_many_attempts"):
+        restarted.consume_grant(grant.token, "activation", PASSWORD, "client")
+    auth.clock.advance(auth.settings.auth_window_seconds)
+    assert restarted.consume_grant(grant.token, "activation", PASSWORD, "client").activated
+
+
+def test_failed_activation_audit_keeps_link_retryable(auth: AuthService) -> None:
+    """A failure after activation flush rolls back credentials, consumption and audit."""
+    admin = bootstrap_login(auth)
+    grant = auth.invite(admin.token, "retry.user", "Retry", "operator")
+    engine = auth.factory.kw["bind"]
+
+    def fail_audit(conn, cursor, statement, parameters, context, executemany) -> None:
+        """Inject failure after the activation account/grant write has been flushed."""
+        if "INSERT INTO audit_logs" in statement:
+            raise RuntimeError("activation audit unavailable")
+
+    event.listen(engine, "before_cursor_execute", fail_audit)
+    try:
+        with pytest.raises(RuntimeError):
+            auth.consume_grant(grant.token, "activation", PASSWORD, "client")
+    finally:
+        event.remove(engine, "before_cursor_execute", fail_audit)
+    with auth.factory() as db:
+        assert not db.get(User, grant.user.id).is_active
+        assert db.scalar(select(AccessGrant.consumed_at)) is None
+        assert db.scalar(select(AuditLog).where(AuditLog.action == "activation_completed")) is None
+    assert auth.consume_grant(grant.token, "activation", PASSWORD, "client").activated

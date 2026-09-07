@@ -10,6 +10,7 @@ from sqlalchemy.exc import OperationalError
 
 from app.api.auth import require_permission
 from app.main import create_app
+from app.models import User
 from app.services.auth import AuthService
 from app.services.auth_types import Identity, Permission
 from tests.auth_fixtures import PASSWORD, REPLACEMENT, bootstrap_login
@@ -235,3 +236,46 @@ def test_non_admin_cannot_call_user_api(browser: TestClient, auth: AuthService, 
         ).status_code
         == 403
     )
+
+
+def test_api_logout_clears_cookie_and_rejects_replay(
+    browser: TestClient, auth: AuthService
+) -> None:
+    """Logout clears the browser cookie and invalidates the copied server credential."""
+    login(browser, auth)
+    token = browser.cookies.get(auth.settings.session_cookie)
+    response = browser.post("/auth/logout", json={}, headers=headers(browser, auth))
+    assert response.status_code == 200 and auth.settings.session_cookie not in browser.cookies
+    browser.cookies.set(auth.settings.session_cookie, token)
+    assert browser.get("/auth/me").status_code == 401
+    assert browser.post("/auth/logout", json={}, headers=headers(browser, auth)).status_code == 200
+
+
+def test_forced_change_restricts_actual_api_routes(browser: TestClient, auth: AuthService) -> None:
+    """A forced-change account cannot call protected routes or renew idle time."""
+    result = login(browser, auth)
+    with auth.factory.begin() as db:
+        db.get(User, result["user"]["id"]).must_change_password = True
+    for path in ("/auth/me", "/auth/users", "/test/read"):
+        assert browser.get(path).status_code == 403
+    assert (
+        browser.post("/auth/activity", json={}, headers=headers(browser, auth)).status_code == 403
+    )
+    response = browser.post(
+        "/auth/password",
+        json={"current_password": PASSWORD, "new_password": REPLACEMENT},
+        headers=headers(browser, auth),
+    )
+    assert response.status_code == 200
+
+
+def test_background_auth_reads_do_not_keep_session_alive(
+    browser: TestClient, auth: AuthService
+) -> None:
+    """Current-account, Admin-list and CSRF refresh GETs leave the idle deadline fixed."""
+    login(browser, auth)
+    auth.clock.advance(auth.settings.session_idle_seconds - 1)
+    for path in ("/auth/me", "/auth/users", "/auth/csrf"):
+        assert browser.get(path).status_code == 200
+    auth.clock.advance(1)
+    assert browser.get("/auth/me").status_code == 401
