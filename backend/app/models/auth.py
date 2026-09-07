@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, false
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, text
 from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -19,7 +19,7 @@ class AuthState(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     bootstrap_completed: Mapped[bool] = mapped_column(
-        Boolean, default=False, server_default=false()
+        Boolean, default=False, server_default=text("0")
     )
 
 

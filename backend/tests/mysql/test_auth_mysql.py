@@ -6,11 +6,14 @@ from decimal import Decimal
 from threading import Barrier
 
 import pytest
+from alembic.autogenerate import compare_metadata
 from alembic.config import Config
-from sqlalchemy import event, func, select, text
+from alembic.migration import MigrationContext
+from sqlalchemy import DefaultClause, MetaData, event, func, select, text
 from sqlalchemy.exc import IntegrityError
 
 from alembic import command
+from app.db.session import Base
 from app.models import AccessGrant, AuditLog, Material, User
 from app.services.auth import AuthService
 from app.services.auth_types import AuthError
@@ -156,6 +159,7 @@ def test_mysql_upgrade_preserves_existing_user(mysql_auth: AuthService) -> None:
             )
         )
     command.upgrade(config, "head")
+
     command.check(config)
     with engine.connect() as db:
         original = db.execute(text("SELECT account, password_hash, activated_at FROM users")).one()
@@ -170,3 +174,32 @@ def test_mysql_upgrade_preserves_existing_user(mysql_auth: AuthService) -> None:
     with engine.connect() as db:
         assert db.execute(text("SELECT account FROM users")).scalar_one() == "existing.admin"
     command.upgrade(config, "head")
+
+
+def test_mysql_auth_constraints_and_real_default_drift(mysql_auth: AuthService) -> None:
+    """Reject invalid authentication rows and detect an actual changed MySQL default."""
+    auth = mysql_auth
+    admin = bootstrap_login(auth)
+    auth.invite(admin.token, "constraint.user", "Constraints", "operator")
+    with auth.factory() as db:
+        for sql in [
+            "UPDATE auth_state SET id=2",
+            "UPDATE login_sessions SET expires_at=created_at",
+            "UPDATE login_sessions SET last_activity_at='2000-01-01 00:00:00'",
+            "UPDATE login_sessions SET user_id=999999",
+            "UPDATE access_grants SET purpose='unsupported'",
+            "UPDATE access_grants SET expires_at=created_at",
+            "UPDATE access_grants SET user_id=999999",
+            "UPDATE access_grants SET issued_by_id=999999",
+            "UPDATE auth_throttles SET attempts=-1",
+        ]:
+            with pytest.raises(IntegrityError), db.begin_nested():
+                db.execute(text(sql))
+    with auth.factory.kw["bind"].connect() as connection:
+        context = MigrationContext.configure(connection, opts={"compare_server_default": True})
+        assert compare_metadata(context, Base.metadata) == []
+        changed = MetaData()
+        for table in Base.metadata.sorted_tables:
+            table.to_metadata(changed)
+        changed.tables["users"].c.is_active.server_default = DefaultClause(text("0"))
+        assert any("modify_default" in str(diff) for diff in compare_metadata(context, changed))

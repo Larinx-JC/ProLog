@@ -3,7 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Numeric, true
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Numeric, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.time import utcnow
@@ -45,13 +45,15 @@ class AbnormalityRulesMixin:
     thickness_min: Mapped[Decimal] = mapped_column(_DECIMAL)
     thickness_max: Mapped[Decimal] = mapped_column(_DECIMAL)
     deviation_check_enabled: Mapped[bool] = mapped_column(
-        Boolean, default=True, server_default=true()
+        Boolean, default=True, server_default=text("1")
     )
     deviation_pct_threshold: Mapped[Decimal] = mapped_column(_DECIMAL)
     thickness_check_enabled: Mapped[bool] = mapped_column(
-        Boolean, default=True, server_default=true()
+        Boolean, default=True, server_default=text("1")
     )
-    limits_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
+    limits_check_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=text("1")
+    )
 
 
 def abnormality_rule_constraints(table_name: str) -> tuple[CheckConstraint, ...]:
