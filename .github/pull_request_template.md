@@ -13,6 +13,13 @@ State whether this is implementation or documentation/planning only.
 - CI run for this commit:
 - Not run / known limitations:
 
+## Full section review
+
+- Reviewed base and head commits:
+- Review report covering implementation, migrations, tests, and documentation:
+- Findings, severity, and disposition:
+- Review and verification after corrections:
+
 ## Demonstration
 
 Provide setup, steps, and expected results using synthetic data. Include the
@@ -31,6 +38,7 @@ relevant permission rejection or failure case.
 - [ ] Acceptance criteria are covered or exceptions are explained.
 - [ ] CI checks pass for the current commit; skipped checks are identified.
 - [ ] The PR diff and demonstration have been reviewed.
+- [ ] The entire section has been reviewed against its base before owner approval.
 - [ ] Project status and affected documentation match the delivered behavior.
 
 Owner verification is separate from this checklist. Record the exact section

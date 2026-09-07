@@ -21,8 +21,12 @@ and [decisions](docs/decisions.md).
    corrections within that section do not require repeated approval.
 4. Implement important behaviors with tests and function documentation.
    Keep commits scoped and maintain the section's acceptance evidence.
-5. Review the completed diff, demonstrate the behavior, update documentation,
-   and present the PR for verification using the PR template.
+5. Review the entire section diff against its base: implementation, migrations,
+   tests, documentation, and agreed requirements. Record findings, their
+   severity, verification evidence, and untested limits. Reviewing only the
+   latest correction or checking green CI is insufficient. After fixes, review
+   the affected changes and rerun relevant verification. Demonstrate the
+   behavior, update documentation, and only then present the PR for verification.
 6. Wait for the owner's next section-verification statement before merging
    and advancing. A review comment, "ok" to planning, or passing CI alone
    does not satisfy the explicit section gate.

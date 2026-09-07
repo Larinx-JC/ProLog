@@ -7,14 +7,15 @@ Updated: 2026-09-07. This is the starting point for project handovers.
 | Section | State | Evidence / next action |
 | --- | --- | --- |
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
-| 2 — Data Model & Database Schema | Implemented; awaiting owner verification | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), branch `section/02-data-model`, implementation baseline `e98da3f`. |
-| 3 — Authentication & Multi-Level Authorization | Acceptance checklist prepared; implementation not authorized yet | [Section 3 checklist](docs/sections/03-authentication.md). |
+| 2 — Data Model & Database Schema | Owner verified; ready to merge after final documentation checks | [Review report](docs/reviews/section-02-review.md), [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), reviewed implementation `a91c6ee`. |
+| 3 — Authentication & Multi-Level Authorization | Authorized; account-policy clarification and implementation next | [Section 3 checklist](docs/sections/03-authentication.md). |
 | 4–16 | Planned | [Current outline](docs/outline.md). |
 
-The owner authorized the workflow/documentation improvements on 2026-09-07.
-That authorization does not verify Section 2 or authorize Section 3 code.
-The current changes update documentation and the PR template on the open
-Section 2 branch; they do not change the schema or application behavior.
+After receiving the full Section 2 review, the owner verified Section 2 and
+authorized Section 3 on 2026-09-07. The remaining non-blocking default-parity
+and function-documentation findings will be resolved during Section 3.
+The current Section 2 closeout adds the review record and approval evidence;
+it does not change the approved schema or application behavior.
 
 ## Verified implementation baseline
 
@@ -34,6 +35,21 @@ Section 2 branch; they do not change the schema or application behavior.
 
 These results apply to the named baseline. For later commits, inspect the
 PR's checks and match their commit before reporting them as verified.
+
+## Full Section 2 review
+
+The owner requires a full section review before any approval request.
+The [review report](docs/reviews/section-02-review.md) covers the complete
+Section 2 diff at `a91c6ee` against Section 1 (`3163e45`).
+All 43 backend tests, Ruff, mypy, and `pip check` passed again on 2026-09-07;
+additional migrated-SQLite checks passed. The exact head's GitHub CI passed,
+including MySQL 8.4 migration, drift, and seed steps.
+
+No production-blocking schema defect was found. A mismatch between ORM and
+migration server defaults, plus missing function comments, remains as
+recommended cleanup. The owner subsequently approved Section 2 with these
+findings visible. Track their correction and verification in Section 3;
+retain the original review findings as history.
 
 ## What exists and what comes next
 
@@ -64,12 +80,13 @@ do not silently stage the directory during unrelated commits.
   Section 4 must settle calculation rules, factory timezone, and self-review.
 - Excel/PDF samples are requested in Section 7, as agreed.
 
-## Approval needed to advance
+## Section approval record
 
-The next owner verification statement is:
+Received from the owner on 2026-09-07:
 
 > Yes, I verify the production of Data Model & Database Schema and you can proceed to the production of Authentication & Multi-Level Authorization.
 
-After that statement and passing checks for the current PR head, merge PR #2
-and start Section 3. See [CONTRIBUTING](CONTRIBUTING.md) for the complete
+After passing checks for the Section 2 closeout commit, merge PR #2 and start
+Section 3. A complete Section 3 review must precede its next approval request;
+Section 4 is not authorized. See [CONTRIBUTING](CONTRIBUTING.md) for the complete
 section workflow and [review history](docs/review-history.md) for past reviews.

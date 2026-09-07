@@ -1,8 +1,13 @@
 # Section 3: Authentication & Multi-Level Authorization
 
-Status: acceptance checklist prepared; implementation awaits the Section 2
-verification statement in [project status](../../PROJECT_STATUS.md).
+Status: implementation authorized by the owner's Section 2 verification on
+2026-09-07; see [project status](../../PROJECT_STATUS.md).
 No acceptance row below is a claim of implemented or passing behavior.
+
+Section 3 also closes the non-blocking R2-01/R2-02 review follow-ups: align
+ORM/database defaults and their drift checks, and complete function comments.
+The approved Section 2 migration's schema remains historical; authentication
+schema changes use a new revision.
 
 ## Purpose and scope
 

@@ -78,9 +78,9 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 is verified and merged. Section 2 is implemented and awaiting
-owner verification. Section 3's acceptance checklist is prepared; its
-implementation awaits the section approval gate.
+Section 1 is verified and merged. Section 2 has received owner verification
+after a full review. Section 3 authentication is authorized; see the status
+page for implementation progress and the remaining policy choices.
 
 The React application is currently a scaffold. See
 [PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,

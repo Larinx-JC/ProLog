@@ -29,6 +29,11 @@ before continuing work.
   service responsibilities. All entry paths must eventually use those writers.
 - Use one branch/PR per section and update its acceptance evidence. Match CI
   results to the actual commit; never infer executed checks from job duration.
+- Before asking the owner to approve a section, review the entire section diff
+  against its base, including implementation, migrations, tests, documentation,
+  and agreed requirements. Rerunning checks or reviewing only the latest fix is
+  insufficient. Present findings with severity, evidence, and remaining limits;
+  after fixes, review the affected changes and rerun relevant verification.
 - At handover, update project status and affected docs, and state what was
   tested and what remains unverified. Do not merge/advance without the owner's
   section verification.
