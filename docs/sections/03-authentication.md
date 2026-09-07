@@ -33,23 +33,23 @@ Browser login, activation, and account-management screens arrive in Section 9.
   review; Reviewer reads production/log data and exports without entry or
   approve/reject authority. See [D04](../decisions.md).
 
-## Decisions to finish before dependent implementation
+## Resolved account decisions
 
-The following proposals need owner review; they were not decided by the two
-invitation/timeout answers.
+The owner confirmed D16–D18 on 2026-09-07. Operators read all runs and may
+edit their own active runs; activation is valid for 24 hours, recovery for
+30 minutes; reissue revokes prior links; multiple sessions are permitted.
+Local interactive Admin setup/recovery protects the final active Admin.
 
-| Choice | Proposed behavior | Decision reference |
+| Choice | Confirmed behavior | Decision reference |
 | --- | --- | --- |
-| Operator visibility and edit scope | Specify own/all runs, edits to other operators' records, and any additional read/export rights. | Q01 |
-| Activation expiry | 24 hours; configurable; resending revokes the prior link. | Q02 |
-| Password recovery | Admin issues a single-use recovery link; account passwords are never disclosed. | Q02 |
-| Concurrent sessions | Permit multiple sessions, each subject to idle and absolute expiry. | Q02 |
-| First Admin and emergency recovery | Local CLI with an interactive password prompt; protect the final active Admin from disable/demotion. | Q03 |
+| Operator visibility and edit scope | View all runs; create runs and edit own active runs; no export or review. | D16 |
+| Activation expiry | 24 hours; configurable; resending revokes the prior link. | D17 |
+| Password recovery | Admin issues a single-use recovery link valid for 30 minutes; passwords are never disclosed. | D17 |
+| Concurrent sessions | Permit multiple sessions, each subject to idle and absolute expiry. | D17 |
+| First Admin and emergency recovery | Local CLI with an interactive password prompt; protect the final active Admin from disable/demotion. | D18 |
 
-The implementation brief will also record password policy, throttling
-thresholds, account-name normalization, activation URL handling, and CSRF
-mechanism before dependent code is written. Use reviewed libraries for
-password hashing and secure token generation.
+The [implementation brief](03-implementation.md) records password policy,
+throttling, account normalization, activation URL handling, and CSRF design.
 
 ## Acceptance checklist
 

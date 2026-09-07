@@ -3,7 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Numeric
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Numeric, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.time import utcnow
@@ -44,10 +44,14 @@ class AbnormalityRulesMixin:
     lower_limit: Mapped[Decimal] = mapped_column(_DECIMAL)
     thickness_min: Mapped[Decimal] = mapped_column(_DECIMAL)
     thickness_max: Mapped[Decimal] = mapped_column(_DECIMAL)
-    deviation_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    deviation_check_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true()
+    )
     deviation_pct_threshold: Mapped[Decimal] = mapped_column(_DECIMAL)
-    thickness_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    limits_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    thickness_check_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true()
+    )
+    limits_check_enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
 
 
 def abnormality_rule_constraints(table_name: str) -> tuple[CheckConstraint, ...]:
@@ -62,13 +66,7 @@ def abnormality_rule_constraints(table_name: str) -> tuple[CheckConstraint, ...]
     per-table, hence the table_name prefix.
     """
     return (
-        CheckConstraint(
-            "lower_limit <= upper_limit", name=f"ck_{table_name}_limits_order"
-        ),
-        CheckConstraint(
-            "thickness_min <= thickness_max", name=f"ck_{table_name}_thickness_order"
-        ),
-        CheckConstraint(
-            "deviation_pct_threshold >= 0", name=f"ck_{table_name}_deviation_nonneg"
-        ),
+        CheckConstraint("lower_limit <= upper_limit", name=f"ck_{table_name}_limits_order"),
+        CheckConstraint("thickness_min <= thickness_max", name=f"ck_{table_name}_thickness_order"),
+        CheckConstraint("deviation_pct_threshold >= 0", name=f"ck_{table_name}_deviation_nonneg"),
     )

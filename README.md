@@ -58,12 +58,18 @@ cd backend
 pip install -r requirements-lock.txt  # pinned, reproducible versions
 pip install -e . --no-deps
 copy .env.example .env                # then edit DATABASE_URL etc.
+python -m alembic upgrade head
+python -m app.cli bootstrap-admin --account admin.local --name Administrator
 uvicorn app.main:app --reload
 ```
 
 Run tests: `pytest` (from `backend/`). Lint: `ruff check .`. Type-check: `mypy app`.
 Regenerating `requirements-lock.txt` after changing dependencies: see the
 comment at the top of that file.
+
+The bootstrap command prompts for a password and works only once. See
+[authentication operations and API](docs/authentication.md) for activation,
+recovery, session policy, configuration, and a repeatable demonstration.
 
 ### Frontend
 

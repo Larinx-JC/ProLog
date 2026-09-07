@@ -35,4 +35,5 @@ class Role(Base):
     users: Mapped[list["User"]] = relationship(back_populates="role")
 
     def __repr__(self) -> str:
+        """Identify the stable role code in debugger output."""
         return f"Role(code={self.code!r})"

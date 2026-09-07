@@ -50,6 +50,7 @@ def find_mismatch(
 
 
 def main() -> None:
+    """Exit unsuccessfully when migrated reference data differs from its contract."""
     engine = create_engine(get_settings().database_url)
     actual = fetch_seeded_roles(engine)
     mismatch = find_mismatch(actual, EXPECTED_ROLES)

@@ -8,11 +8,16 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from app.core.config import Settings
+from app.core.security import Passwords
 from app.db.session import Base
 from app.main import create_app
-from app.models import Material, Role, Run, RunStatus, User
+from app.models import AuthState, Material, Role, Run, RunStatus, User
 from app.models.role import ADMIN
+from app.services.auth import AuthService
+from tests.auth_fixtures import FrozenClock
 
 
 @pytest.fixture
@@ -119,3 +124,33 @@ def run(db_session: Session, material: Material, user: User) -> Run:
     db_session.add(r)
     db_session.flush()
     return r
+
+
+@pytest.fixture(scope="session")
+def passwords() -> Passwords:
+    """Reuse a hasher while keeping every test's database and clock isolated."""
+    return Passwords()
+
+
+@pytest.fixture
+def auth(passwords: Passwords) -> Iterator[AuthService]:
+    """Provide real SQLite persistence shared with TestClient's worker thread."""
+    engine = create_engine(
+        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+    )
+
+    @event.listens_for(engine, "connect")
+    def foreign_keys(connection, record) -> None:
+        """Enable constraints on all connections used by authentication fixtures."""
+        connection.execute("PRAGMA foreign_keys=ON")
+
+    Base.metadata.create_all(engine)
+    factory = sessionmaker(bind=engine, autoflush=False)
+    with factory.begin() as db:
+        db.add_all(
+            [Role(code=code, display_name=code) for code in ("admin", "operator", "reviewer")]
+        )
+        db.add(AuthState(id=1, bootstrap_completed=False))
+    settings = Settings(_env_file=None, app_env="test", secret_key="test-secret-" * 5)
+    yield AuthService(factory, settings, FrozenClock(), passwords)
+    engine.dispose()

@@ -7,15 +7,15 @@ Updated: 2026-09-07. This is the starting point for project handovers.
 | Section | State | Evidence / next action |
 | --- | --- | --- |
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
-| 2 — Data Model & Database Schema | Owner verified; ready to merge after final documentation checks | [Review report](docs/reviews/section-02-review.md), [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), reviewed implementation `a91c6ee`. |
-| 3 — Authentication & Multi-Level Authorization | Authorized; account-policy clarification and implementation next | [Section 3 checklist](docs/sections/03-authentication.md). |
+| 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
+| 3 — Authentication & Multi-Level Authorization | Implemented locally; MySQL/CI verification and full review in progress | Branch `codex/section-03-authentication`; [checklist](docs/sections/03-authentication.md), [implementation brief](docs/sections/03-implementation.md). |
 | 4–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
 authorized Section 3 on 2026-09-07. The remaining non-blocking default-parity
 and function-documentation findings will be resolved during Section 3.
-The current Section 2 closeout adds the review record and approval evidence;
-it does not change the approved schema or application behavior.
+Section 2 closeout recorded the review and approval without changing behavior.
+Section 3 adds authentication, a new migration, and expanded verification.
 
 ## Verified implementation baseline
 
@@ -53,10 +53,11 @@ retain the original review findings as history.
 
 ## What exists and what comes next
 
-The backend contains configuration, a health endpoint, ORM models, a migration,
-and tests. The React app is a scaffold placeholder. Authentication, production
-services, operational screens, search, exports, ingestion, and deployment
-remain to be implemented through their approved sections.
+The backend now includes authentication services/APIs, local Admin setup,
+server-side sessions, activation/recovery grants, and related tests. This work
+is undergoing Section 3 verification. The React app remains a scaffold;
+authentication screens arrive in Section 9. Production services, operational
+screens, search, exports, ingestion, and deployment belong to later sections.
 
 The local design is in `prototype/Production Dashboard Frontend/`, including
 `Product Status Dashboard.dc.html`, `Login.dc.html`, `support.js`, and images.
@@ -76,7 +77,7 @@ do not silently stage the directory during unrelated commits.
 - [Testing improvements](docs/testing.md) are assigned to the sections where
   the relevant code is introduced. Windows CI and MySQL behavior tests are
   scheduled, not already implemented.
-- Section 3 must settle remaining account/permission details in its checklist.
+- Section 3 account/permission choices were confirmed in the owner replies.
   Section 4 must settle calculation rules, factory timezone, and self-review.
 - Excel/PDF samples are requested in Section 7, as agreed.
 
@@ -86,7 +87,7 @@ Received from the owner on 2026-09-07:
 
 > Yes, I verify the production of Data Model & Database Schema and you can proceed to the production of Authentication & Multi-Level Authorization.
 
-After passing checks for the Section 2 closeout commit, merge PR #2 and start
-Section 3. A complete Section 3 review must precede its next approval request;
+PR #2 merged after its final checks passed. A complete Section 3 review must
+precede its next approval request;
 Section 4 is not authorized. See [CONTRIBUTING](CONTRIBUTING.md) for the complete
 section workflow and [review history](docs/review-history.md) for past reviews.

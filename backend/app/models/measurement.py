@@ -46,13 +46,13 @@ class Measurement(Base):
     deviation_percent: Mapped[Decimal | None] = mapped_column(_DECIMAL, default=None)
 
     status: Mapped[MeasurementStatus] = mapped_column(
-        sa_enum(MeasurementStatus), default=MeasurementStatus.MISSING
+        sa_enum(MeasurementStatus), default=MeasurementStatus.MISSING, server_default="missing"
     )
     # Reserves the ingestion-portal (outline Section 8) distinction now,
     # at the cost of a single column, rather than a full speculative field
     # set for a section that isn't scoped yet.
     entry_method: Mapped[EntryMethod] = mapped_column(
-        sa_enum(EntryMethod), default=EntryMethod.MANUAL
+        sa_enum(EntryMethod), default=EntryMethod.MANUAL, server_default="manual"
     )
 
     recorded_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
@@ -62,4 +62,5 @@ class Measurement(Base):
     recorded_by: Mapped["User | None"] = relationship()
 
     def __repr__(self) -> str:
+        """Show the owning run and measurement completion state."""
         return f"Measurement(run_id={self.run_id!r}, status={self.status!r})"

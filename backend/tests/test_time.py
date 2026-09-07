@@ -8,7 +8,7 @@ the result is naive (no tzinfo), and it's genuinely "now" in UTC.
 
 from datetime import UTC, datetime
 
-from app.core.time import utcnow
+from app.core.time import SystemClock, utcnow
 
 
 def test_utcnow_is_timezone_naive() -> None:
@@ -27,3 +27,10 @@ def test_utcnow_represents_the_current_utc_instant() -> None:
     after = datetime.now(UTC).replace(tzinfo=None)
 
     assert before <= result <= after
+
+
+def test_system_clock_uses_current_utc() -> None:
+    """The production service clock follows the same UTC-naive storage convention."""
+    before = utcnow()
+    now = SystemClock().now()
+    assert now.tzinfo is None and before <= now <= utcnow()

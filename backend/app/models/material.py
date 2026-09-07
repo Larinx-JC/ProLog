@@ -1,6 +1,6 @@
 """Material: a detected material's standard value and abnormality rules."""
 
-from sqlalchemy import Boolean, String
+from sqlalchemy import Boolean, String, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.session import Base
@@ -26,7 +26,8 @@ class Material(TimestampMixin, AbnormalityRulesMixin, Base):
     # deleted without orphaning their foreign key, so "deleting" a material
     # in the UI just deactivates it (excluded from the "start new run"
     # material picker, kept for existing runs' history).
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
 
     def __repr__(self) -> str:
+        """Identify the material in debugger output."""
         return f"Material(material_no={self.material_no!r})"
