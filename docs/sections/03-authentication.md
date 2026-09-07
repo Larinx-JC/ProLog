@@ -2,7 +2,8 @@
 
 Status: implementation authorized by the owner's Section 2 verification on
 2026-09-07; see [project status](../../PROJECT_STATUS.md).
-No acceptance row below is a claim of implemented or passing behavior.
+Implementation, full review and CI verification are complete; evidence is
+recorded in the [review report](../reviews/section-03-review.md).
 
 Section 3 also closes the non-blocking R2-01/R2-02 review follow-ups: align
 ORM/database defaults and their drift checks, and complete function comments.
@@ -78,7 +79,7 @@ credentials at authentication boundaries.
 [OWASP session guidance](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html)
 
 Activation/recovery tokens should be unpredictable, securely stored,
-single-use, and expiring. Apply the recovery-token guidance to the proposed
+single-use, and expiring. Apply the recovery-token guidance to the confirmed
 Admin-delivered link flow; it does not introduce an email requirement.
 [OWASP recovery-token guidance](https://cheatsheetseries.owasp.org/cheatsheets/Forgot_Password_Cheat_Sheet.html)
 
@@ -86,7 +87,7 @@ Use server validation for state-changing requests, including the selected
 CSRF mechanism and origin checks. SameSite is an additional browser control.
 [OWASP CSRF guidance](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html)
 
-## Proposed implementation boundaries
+## Implemented boundaries
 
 | Component | Responsibility |
 | --- | --- |
@@ -97,14 +98,31 @@ CSRF mechanism and origin checks. SameSite is an additional browser control.
 | Permission policy / API dependencies | Map the agreed roles to operations and enforce current account state. |
 | Shared repositories / transaction boundary | Keep each account mutation and audit write in one database transaction. |
 
-These are proposed class boundaries, to refine in the implementation brief.
+The concrete classes and data flow are in [authentication](../authentication.md).
 Use a server-side session store: a cookie containing a signed user/role payload
 alone would not meet the agreed revocation requirement.
 
-Proposed persistence includes invitation/token digests, purpose, expiry,
+Persistence includes invitation/token digests, purpose, expiry,
 issuer/recipient, consumption/revocation timestamps; and session token digests,
 user association, creation/activity/expiry/revocation timestamps. Final column
-names and relationships must be documented with the Section 3 migration.
+names and relationships are documented with the Section 3 migration.
+
+## Acceptance evidence map
+
+All paths below are under `backend/tests/`. The review records executed counts
+and the exact CI commit; this map states what the assertions establish.
+
+| Criteria | Test evidence |
+| --- | --- |
+| AUTH-01, AUTH-02 | `test_auth_config_cli.py`, bootstrap/duplicate/permission tests in `test_auth_services.py`, non-Admin API rejection, MySQL bootstrap race. |
+| AUTH-03 | Activation boundary/reissue/disable/single-use tests; failed-activation audit rollback; MySQL activation consumption race. |
+| AUTH-04, AUTH-05 | Generic login rejection matrix, salted hash/rehash tests, API fixation/CSRF rotation, persisted digest and audit-secret assertions. |
+| AUTH-06, AUTH-07 | Idle/absolute boundary tests, API background reads and foreground activity, API logout/replay and service restart tests. |
+| AUTH-08, AUTH-09 | All capabilities and ownership cases, stale-session rejection, forced-change API checks, MySQL final-Admin race. Production transition eligibility remains Section 4. |
+| AUTH-10, AUTH-11 | Password/recovery revocation and expiry tests, MySQL recovery race, forced-change service and actual-route rejection tests. |
+| AUTH-12, AUTH-15 | Real environment-loading tests; cookie attributes; JSON/CSRF/origin/GET restrictions; safe validation and unavailable-database responses. |
+| AUTH-13, AUTH-14 | Account/address/grant throttling, clock-controlled window recovery and restart; invitation/activation audit rollback tests on SQLite and invitation rollback on MySQL. |
+| AUTH-16 | `test_auth_migrations.py` and MySQL existing-user upgrade/recovery/downgrade test; exact seeds; unchanged historical DDL; real changed-default detection. |
 
 ## Demonstration for handover
 

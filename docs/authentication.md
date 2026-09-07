@@ -197,6 +197,11 @@ user or production rows. Run downgrade only for a deliberate rollback, not as
 a normal operating step. The initial migration received docstrings only; its
 schema and seed operations are unchanged.
 
+The metadata now includes the approved production server defaults. Boolean
+defaults use numeric SQL `0`/`1`, matching MySQL reflection; comparison remains
+enabled for all defaults. Migration tests deliberately change an expected
+default and assert that drift is reported, on both SQLite and MySQL.
+
 ## Executable demonstrations and verification
 
 From `backend/`, in the existing conda environment:
@@ -213,3 +218,7 @@ expiry and recovery. The API tests use FastAPI TestClient and a disposable
 database; they are not a browser implementation. Database concurrency tests
 run in CI on migrated MySQL 8.4, while unit tests run on Windows and Linux.
 Production lifecycle screens and browser walkthroughs remain later sections.
+
+The [full Section 3 review](reviews/section-03-review.md) records the tested
+commit, CI results, resolved findings and remaining limits. No owner
+verification or authorization for Section 4 is implied by passing these tests.
