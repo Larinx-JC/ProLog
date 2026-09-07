@@ -120,10 +120,15 @@ stateDiagram-v2
 
 There is no "closed without review" path — every run reaches its
 terminal state (`Reviewed`) through review. `review_resolution` is
-`approved` when `pending_from=active`, or the reviewer's choice of
+`approved` when `pending_from=active`, or the Admin's choice of
 `confirmed_abnormal` / `false_alarm` when `pending_from=abnormal`.
 
 ## Design decisions and why
+
+The snapshot copying, immutability, and lifecycle behavior described below
+are contracts for Section 4 services. Section 2 provides columns, relationships,
+and structural constraints; it does not yet implement those service operations.
+See [the current outline](outline.md) and [decisions](decisions.md).
 
 - **Role is a normalized table**, not an enum column on User. Only 3 rows
   exist today (seeded by the initial migration), but a future role (or
@@ -179,8 +184,8 @@ name is table-prefixed):
 - `deviation_pct_threshold >= 0`
 - `runs.interval_seconds > 0`
 - `runs.pending_from IS NULL OR pending_from IN ('active', 'abnormal')`
-  — `pending_from` has to share `status`'s full `RunStatus` column type,
-  so without this the DB would otherwise silently accept e.g.
+  — `pending_from` currently uses `status`'s full `RunStatus` column type,
+  so without this CHECK the DB would otherwise accept e.g.
   `pending_from='reviewed'`, which is a legitimate enum member but
   nonsensical here.
 - `runs.end_time IS NULL OR end_time >= start_time`

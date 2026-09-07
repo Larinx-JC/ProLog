@@ -35,6 +35,10 @@ This repo is being built section by section against a written outline
 (see [docs/outline.md](docs/outline.md)); each section lands as its own
 PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/PR workflow.
 
+For the current handover, start with [PROJECT_STATUS.md](PROJECT_STATUS.md).
+Confirmed choices are in [docs/decisions.md](docs/decisions.md); the next
+section's checklist is [Section 3 authentication](docs/sections/03-authentication.md).
+
 ```
 backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest
 frontend/   React + TypeScript app (Vite), vitest
@@ -74,11 +78,10 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 (Project Scaffolding & Conventions) verified and merged.
+Section 1 is verified and merged. Section 2 is implemented and awaiting
+owner verification. Section 3's acceptance checklist is prepared; its
+implementation awaits the section approval gate.
 
-Section 2 (Data Model & Database Schema) implemented and reviewed —
-Role/User/Material/Run/Measurement/AuditLog models, migration verified
-against real MySQL 8.4 (schema, CHECK constraints, and seeded reference
-data all checked in CI), 100% test coverage. Awaiting sign-off; see
-`docs/data-model.md` for the schema and `docs/outline.md` for decisions
-locked in during review.
+The React application is currently a scaffold. See
+[PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,
+local verification, and remaining work.

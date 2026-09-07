@@ -1,11 +1,31 @@
 # Workflow
 
-This project follows **GitHub Flow** in spirit, adapted for a solo developer
-on a free-tier private repo (GitHub-enforced branch protection needs GitHub
-Pro or an org on a private repo, and GitHub won't let you approve your own
-PR anyway — see the repo's own "Skip enforced protection for now" decision).
-Nothing below is technically blocked by GitHub; it's the process we're
-choosing to follow by discipline.
+This project uses section branches, pull requests, passing CI, and explicit
+owner verification. GitHub branch protection is not enabled for this repository.
+The process below is followed by the owner and implementation agent.
+
+Start with [project status](PROJECT_STATUS.md), the [outline](docs/outline.md),
+and [decisions](docs/decisions.md).
+
+## Section workflow
+
+1. Write the section's acceptance checklist and resolve decisions that affect
+   its implementation. Separate agreed requirements from proposed defaults.
+2. Obtain the owner's authorization to advance from the previous section.
+   The required form is:
+
+   > Yes, I verify the production of {completed section name} and you can proceed to the production of {next section name}.
+
+3. Merge the verified previous section after checking CI for its current head,
+   then start the next section's branch. Once authorized, routine work and
+   corrections within that section do not require repeated approval.
+4. Implement important behaviors with tests and function documentation.
+   Keep commits scoped and maintain the section's acceptance evidence.
+5. Review the completed diff, demonstrate the behavior, update documentation,
+   and present the PR for verification using the PR template.
+6. Wait for the owner's next section-verification statement before merging
+   and advancing. A review comment, "ok" to planning, or passing CI alone
+   does not satisfy the explicit section gate.
 
 ## Branching
 
@@ -17,13 +37,17 @@ choosing to follow by discipline.
 
 ## Pull requests
 
-- Every change lands via a PR — this is a self-review record (a chance to
-  read the diff as a whole and let CI run) rather than an approval gate.
+- Every change lands via a PR with a reviewable diff, demonstration procedure,
+  and verification evidence for the current commit.
 - No independent approving review is required while there's a single
   developer on the project.
 - All CI checks must pass (lint, backend-tests, frontend-tests — see
   `.github/workflows/ci.yml`) before merging.
 - Prefer squash-merge so `main` history reads one commit per logical change.
+- Use [.github/pull_request_template.md](.github/pull_request_template.md).
+  Record the section approval separately from technical test results.
+- Keep fixes to the current section on its open PR. After an approved migration
+  is merged, extend it with a new revision; do not rewrite migration history.
 
 ## Commits
 
@@ -33,10 +57,25 @@ choosing to follow by discipline.
 
 ## Tests and comments
 
-- Every non-trivial function gets a unit test and a short comment
-  explaining *why* (not what) where it isn't obvious from the code itself.
+- Every written function has a short comment/docstring explaining its purpose
+  and non-obvious assumptions. Important functions have success, rejection,
+  and error-path tests appropriate to their behavior.
+- Follow [the testing plan](docs/testing.md): behavioral assertions, selected
+  MySQL integration checks, deterministic time tests, and scoped coverage.
+  State what a passing check actually proves and what was not executed.
 - Measured physical quantities and calculated numeric results are
   consistently 2-decimal fixed-point values end to end: MySQL
   `DECIMAL(10,2)`, Python `Decimal` (never `float`), Pydantic constrained
   `Decimal`. Identifiers, counts, and whole-second intervals use plain
   integers instead — see `docs/data-model.md`.
+
+## Documentation and handovers
+
+- Keep [PROJECT_STATUS.md](PROJECT_STATUS.md) current with the section state,
+  tested commit, CI evidence, next gate, and links.
+- Record confirmed decisions in [docs/decisions.md](docs/decisions.md).
+  Link each deferred requirement to its owning section.
+- Keep the active [outline](docs/outline.md) concise. Historical reviews live
+  in [review history](docs/review-history.md).
+- For documentation-only changes, check links, Markdown structure, and the
+  complete diff. Do not claim application tests were rerun if they were not.
