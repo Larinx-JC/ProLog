@@ -28,7 +28,8 @@ are explicit deliverables within the existing sections.
    immutability, review consistency, audit atomicity, repeated requests, and
    simultaneous edits. Add material-rule administration services and audit
    events. Resolve self-review policy and calculation rules before coding
-   dependent behavior; see [decisions](decisions.md).
+   dependent behavior; see [decisions](decisions.md) and the
+   [Section 4 acceptance plan](sections/04-run-lifecycle.md).
 5. **Backend API Layer** — production endpoints for runs, measurements,
    closure, Admin review, materials, audit-log reads, and overview aggregates.
    Reuse Section 3 authentication and Section 4 services; validate the API

@@ -37,7 +37,7 @@ PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/PR workflow.
 
 For the current handover, start with [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Confirmed choices are in [docs/decisions.md](docs/decisions.md); the
-current section's checklist is [Section 3 authentication](docs/sections/03-authentication.md).
+current section's checklist is [Section 4 run lifecycle](docs/sections/04-run-lifecycle.md).
 
 ```
 backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest
@@ -84,9 +84,9 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Sections 1 and 2 are verified and merged. Section 3 authentication is implemented,
-fully reviewed, and awaiting owner verification after passing CI. See the
-[Section 3 review](docs/reviews/section-03-review.md) and status page for evidence.
+Sections 1–3 are verified and merged. Section 4's service-layer implementation
+is authorized, with an [acceptance plan](docs/sections/04-run-lifecycle.md) and
+product decisions awaiting owner answers. See the status page for evidence.
 
 The React application is currently a scaffold. See
 [PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,

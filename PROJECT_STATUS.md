@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-09-07. This is the starting point for project handovers.
+Updated: 2026-09-08. This is the starting point for project handovers.
 
 ## Current stage
 
@@ -8,14 +8,20 @@ Updated: 2026-09-07. This is the starting point for project handovers.
 | --- | --- | --- |
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
 | 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
-| 3 — Authentication & Multi-Level Authorization | Implemented, fully reviewed and tested; awaiting owner verification | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3); [review](docs/reviews/section-03-review.md), [checklist](docs/sections/03-authentication.md), [operations guide](docs/authentication.md). |
-| 4–16 | Planned | [Current outline](docs/outline.md). |
+| 3 — Authentication & Multi-Level Authorization | Owner verified and merged | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3), squash `f7bee48`; [full review](docs/reviews/section-03-review.md). |
+| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Authorized; acceptance plan prepared; product decisions pending | Branch `codex/section-04-run-lifecycle`; [Section 4 plan](docs/sections/04-run-lifecycle.md). No production service implementation yet. |
+| 5–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
 authorized Section 3 on 2026-09-07. The remaining non-blocking default-parity
 and function-documentation findings are resolved in Section 3.
 Section 2 closeout recorded the review and approval without changing behavior.
 Section 3 adds authentication, a new migration, and expanded verification.
+
+On 2026-09-08 the owner explicitly confirmed Section 3 and approved moving to
+Section 4. The exact approved head `21e7c6a` had all five checks passing in
+[CI run 34185911703](https://github.com/Larinx-JC/ProLog/actions/runs/34185911703).
+PR #3 was merged, and Section 4's branch starts from squash `f7bee48`.
 
 ## Section 3 verification
 
@@ -33,7 +39,8 @@ MySQL was exercised in CI, not on a locally installed service.
 The subsequent owner-reported `_env_file` editor diagnostic is corrected in
 shared test configuration. Pyright now reports zero errors/warnings in the
 five affected files, and 130 local backend tests pass. See the review addendum
-and PR #3 for the latest correction and its exact-head CI evidence.
+and PR #3 for the correction and exact-head CI evidence. The approved merged
+baseline is `f7bee48`; no Section 4 application behavior is claimed by these checks.
 
 ## Historical Section 2 baseline
 
@@ -70,9 +77,12 @@ and verified in Section 3; the original review remains historical evidence.
 
 ## What exists and what comes next
 
-The backend now includes authentication services/APIs, local Admin setup,
-server-side sessions, activation/recovery grants, and related tests. This work
-is awaiting owner verification. The React app remains a scaffold;
+The backend includes verified authentication services/APIs, local Admin setup,
+server-side sessions, activation/recovery grants, and related tests. Section 4
+now has a written acceptance plan. Factory timezone/units, deviation formula,
+rounding, completeness/closure and self-review questions await owner answers;
+dependent implementation will start after those choices are resolved.
+The React app remains a scaffold;
 authentication screens arrive in Section 9. Production services, operational
 screens, search, exports, ingestion, and deployment belong to later sections.
 
@@ -105,6 +115,12 @@ Received from the owner on 2026-09-07:
 > Yes, I verify the production of Data Model & Database Schema and you can proceed to the production of Authentication & Multi-Level Authorization.
 
 PR #2 merged after its final checks passed. A complete Section 3 review must
-precede its next approval request;
-Section 4 is not authorized. See [CONTRIBUTING](CONTRIBUTING.md) for the complete
-section workflow and [review history](docs/review-history.md) for past reviews.
+precede its approval request; that review and its correction follow-up were
+completed before the owner replied on 2026-09-08:
+
+> Ok, I confirm section 3 and I approve to move to section 4
+
+This explicit approval authorizes Section 4. PR #3 merged after its exact-head
+checks were confirmed. Section 5 is not authorized. See
+[CONTRIBUTING](CONTRIBUTING.md) for the section workflow and
+[review history](docs/review-history.md) for past reviews.

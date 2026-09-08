@@ -1,8 +1,9 @@
 # Full Section 3 review
 
-Reviewed on 2026-09-07. Result: no remaining blocking finding in the authorized
-authentication section after the corrections below. Ready for owner
-verification; PR #3 remains draft and unmerged. Section 4 is not authorized.
+Reviewed on 2026-09-07, with the editor correction follow-up documented below.
+Result: no remaining blocking finding in the authorized authentication section.
+The owner subsequently verified Section 3 on 2026-09-08; PR #3 merged as `f7bee48`
+after the exact approved head's checks passed. Section 4 is now authorized.
 
 ## Scope and method
 
@@ -109,6 +110,12 @@ Current follow-up CI evidence is recorded on PR #3 for its exact head.
 
 ## Approval boundary
 
-The owner has approved Section 2 and authorized this section only. Passing
-tests and this review do not merge PR #3 or authorize Section 4. The owner must
-verify Authentication & Multi-Level Authorization before the next section begins.
+At the review handover, this section awaited owner verification and PR #3 was
+draft/unmerged. The owner subsequently stated on 2026-09-08:
+
+> Ok, I confirm section 3 and I approve to move to section 4
+
+The explicit approval was recorded on PR #3. Head `21e7c6a` was confirmed green
+in [CI run 34185911703](https://github.com/Larinx-JC/ProLog/actions/runs/34185911703),
+then merged as `f7bee48`. Section 4 work proceeds from that baseline, with its
+own product decisions and eventual full-review/owner-verification gate.

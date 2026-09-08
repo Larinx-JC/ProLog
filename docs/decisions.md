@@ -1,6 +1,6 @@
 # Project decisions
 
-Updated: 2026-09-07. This register separates confirmed choices from proposals.
+Updated: 2026-09-08. This register separates confirmed choices from proposals.
 Update a decision here when the owner resolves it; keep the evidence and
 section state in [project status](../PROJECT_STATUS.md).
 
@@ -32,9 +32,14 @@ section state in [project status](../PROJECT_STATUS.md).
 The values below are proposals or unresolved requirements, not implemented
 behavior. Resolve each before coding the behavior that depends on it.
 
+Section 4 was authorized on 2026-09-08. Questions covering Q04–Q06 were sent
+to the owner; the [Section 4 plan](sections/04-run-lifecycle.md) records their
+scope and the prototype's deviation-formula ambiguity. No answer has been
+assumed for pending questions.
+
 | ID | Due | Choice / proposed direction |
 | --- | --- | --- |
-| Q04 | Before Section 4 calculations / Section 5 schemas | API decimal representation and rounding. Proposed: validated fixed-scale decimal strings (e.g. `"122.50"`) with Python Decimal calculations. Confirm rounding mode, rounding stage, valid ranges, and treatment of input with more than two decimal places. |
+| Q04 | Before Section 4 calculations / Section 5 schemas | Deviation formula (variation about four-point mean versus distance from the material standard), API decimal representation and rounding. Proposed: decimal strings, reject more than two fractional places, ROUND_HALF_UP for stored results, evaluate alarms before rounding. Confirm valid ranges/zero handling as well. |
 | Q05 | Before Section 4 time normalization | Factory IANA timezone, measurement units, missing/partial measurement semantics, and handling of ambiguous/nonexistent local times. The workstation timezone is not a factory setting. |
 | Q06 | Before Section 4 review behavior | Whether an Admin may review their own run; required reasons, required measurement completeness, and resolution eligibility. Keep the approved terminal Reviewed state. |
 | Q07 | Before Section 6 | Searchable fields, inclusive/exclusive dates, sorting defaults, expected record volume, and a benchmark target on representative hardware. |
