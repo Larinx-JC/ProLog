@@ -35,6 +35,7 @@ _ENTRY_METHOD = sa.Enum("manual", "automated", name="entry_method")
 
 
 def upgrade() -> None:
+    """Create the initial production schema and fixed reference-role rows."""
     op.create_table(
         "roles",
         sa.Column("id", sa.Integer, primary_key=True),
@@ -214,6 +215,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Remove the initial production schema in reverse dependency order."""
     op.drop_index("ix_audit_logs_action", table_name="audit_logs")
     op.drop_table("audit_logs")
     op.drop_table("measurements")

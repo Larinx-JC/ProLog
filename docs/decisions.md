@@ -23,6 +23,9 @@ section state in [project status](../PROJECT_STATUS.md).
 | D13 | Function documentation and tests for every important function; reusable domain/service classes and shared UI components. | Project implementation requirements. |
 | D14 | Admin supplies a single-use activation link through an existing trusted channel. Application email delivery is not required. | Owner answer, 2026-09-07. |
 | D15 | Configurable session defaults: 30 minutes inactive and 12 hours absolute maximum. Background dashboard refresh does not count as activity. | Owner answer, 2026-09-07. |
+| D16 | Operators may view all runs, create runs, and edit their own active runs; no export or review. Lifecycle eligibility is enforced by Section 4 services. | Owner Section 3 answer, 2026-09-07. |
+| D17 | Activation links expire after 24 hours, recovery links after 30 minutes; configurable. Reissuing revokes older grants; multiple sessions may coexist within D15 limits. | Owner Section 3 answer, 2026-09-07. |
+| D18 | First Admin setup and emergency recovery use an interactive local CLI, with no default credentials and protection against disabling/demoting the final active Admin. | Owner Section 3 answer, 2026-09-07. |
 
 ## Scheduled decisions
 
@@ -31,9 +34,6 @@ behavior. Resolve each before coding the behavior that depends on it.
 
 | ID | Due | Choice / proposed direction |
 | --- | --- | --- |
-| Q01 | Section 3 | Confirm Operator row visibility (own runs or all factory runs), permitted edits to others' runs, and any read/export permissions beyond the agreed entry role. Until resolved, do not broaden permissions implicitly. |
-| Q02 | Section 3 | Confirm invitation lifetime, password-recovery procedure, and concurrent-session policy. Proposed: activation expires after 24 hours; Admin issues a single-use recovery link; multiple sessions may coexist within the agreed timeouts. |
-| Q03 | Section 3 | Review first-Admin bootstrap and emergency recovery procedure. Proposed: local CLI with an interactive password prompt, no default account, and protection against disabling/demoting the final active Admin. |
 | Q04 | Before Section 4 calculations / Section 5 schemas | API decimal representation and rounding. Proposed: validated fixed-scale decimal strings (e.g. `"122.50"`) with Python Decimal calculations. Confirm rounding mode, rounding stage, valid ranges, and treatment of input with more than two decimal places. |
 | Q05 | Before Section 4 time normalization | Factory IANA timezone, measurement units, missing/partial measurement semantics, and handling of ambiguous/nonexistent local times. The workstation timezone is not a factory setting. |
 | Q06 | Before Section 4 review behavior | Whether an Admin may review their own run; required reasons, required measurement completeness, and resolution eligibility. Keep the approved terminal Reviewed state. |

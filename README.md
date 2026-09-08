@@ -25,7 +25,7 @@ authorized users can reach it remotely over VPN only.
 
 Plus: cross-cutting search (by attribute/date) and export (CSV/Excel/PDF)
 over all run and measurement data, and a role system — **Admin** (entry, review,
-user/config management), **Operator** (entry only), **Reviewer** (view +
+user/config management), **Operator** (view all runs; create/edit own eligible runs), **Reviewer** (view +
 export only). Accounts are admin-invite-only; there's no open
 self-registration.
 
@@ -36,8 +36,8 @@ This repo is being built section by section against a written outline
 PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/PR workflow.
 
 For the current handover, start with [PROJECT_STATUS.md](PROJECT_STATUS.md).
-Confirmed choices are in [docs/decisions.md](docs/decisions.md); the next
-section's checklist is [Section 3 authentication](docs/sections/03-authentication.md).
+Confirmed choices are in [docs/decisions.md](docs/decisions.md); the
+current section's checklist is [Section 3 authentication](docs/sections/03-authentication.md).
 
 ```
 backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest
@@ -58,12 +58,18 @@ cd backend
 pip install -r requirements-lock.txt  # pinned, reproducible versions
 pip install -e . --no-deps
 copy .env.example .env                # then edit DATABASE_URL etc.
+python -m alembic upgrade head
+python -m app.cli bootstrap-admin --account admin.local --name Administrator
 uvicorn app.main:app --reload
 ```
 
 Run tests: `pytest` (from `backend/`). Lint: `ruff check .`. Type-check: `mypy app`.
 Regenerating `requirements-lock.txt` after changing dependencies: see the
 comment at the top of that file.
+
+The bootstrap command prompts for a password and works only once. See
+[authentication operations and API](docs/authentication.md) for activation,
+recovery, session policy, configuration, and a repeatable demonstration.
 
 ### Frontend
 
@@ -78,9 +84,9 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Section 1 is verified and merged. Section 2 has received owner verification
-after a full review. Section 3 authentication is authorized; see the status
-page for implementation progress and the remaining policy choices.
+Sections 1 and 2 are verified and merged. Section 3 authentication is implemented,
+fully reviewed, and awaiting owner verification after passing CI. See the
+[Section 3 review](docs/reviews/section-03-review.md) and status page for evidence.
 
 The React application is currently a scaffold. See
 [PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,

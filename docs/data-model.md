@@ -1,5 +1,9 @@
 # Data Model (Section 2)
 
+This describes the production schema introduced in Section 2. Section 3 adds
+`users.activated_at` and four authentication tables; their types, relationships,
+indexes and migration behavior are documented in [authentication](authentication.md).
+
 ## Entity-relationship diagram
 
 ```mermaid

@@ -4,6 +4,7 @@ this package alone is enough to register the full schema.
 """
 
 from app.models.audit_log import AuditLog
+from app.models.auth import AccessGrant, AuthState, AuthThrottle, LoginSession
 from app.models.enums import EntryMethod, MeasurementStatus, ReviewResolution, RunStatus
 from app.models.material import Material
 from app.models.measurement import Measurement
@@ -12,9 +13,13 @@ from app.models.run import Run
 from app.models.user import User
 
 __all__ = [
+    "AccessGrant",
     "AuditLog",
+    "AuthState",
+    "AuthThrottle",
     "EntryMethod",
     "Material",
+    "LoginSession",
     "Measurement",
     "MeasurementStatus",
     "ReviewResolution",

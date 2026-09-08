@@ -6,9 +6,9 @@ against real MySQL by CI (see .github/workflows/ci.yml), since that's
 what catches dialect-specific issues these tests can't.
 """
 
-import time
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy import text
@@ -70,8 +70,7 @@ def test_timestamp_mixin_updated_at_advances_on_update(
 ) -> None:
     """onupdate=utcnow (see TimestampMixin) must actually fire on a real
     update -- updated_at should move forward, not stay frozen at its
-    original value. The sleep guarantees a genuinely later utcnow()
-    value regardless of clock resolution on the test machine.
+    original value. A controlled clock avoids sleeps and timing assumptions.
 
     created_at/updated_at are each set by their own independent utcnow()
     call at insert time (see TimestampMixin), so they're already
@@ -81,13 +80,15 @@ def test_timestamp_mixin_updated_at_advances_on_update(
     original_created_at = material.created_at
     original_updated_at = material.updated_at
 
-    time.sleep(0.01)
-    material.standard_value = Decimal("111.11")
-    db_session.commit()
+    later = original_updated_at + timedelta(seconds=1)
+    with patch("app.core.time.datetime") as clock:
+        clock.now.return_value = later.replace(tzinfo=UTC)
+        material.standard_value = Decimal("111.11")
+        db_session.commit()
     db_session.refresh(material)
 
     assert material.created_at == original_created_at
-    assert material.updated_at > original_updated_at
+    assert material.updated_at == later
 
 
 def test_run_snapshots_all_material_rules_independent_of_material(
@@ -248,9 +249,7 @@ def test_user_rejects_invalid_role_id(db_session: Session, admin_role: Role) -> 
     enforcement is actually on (see conftest.db_session), not just that
     the column exists."""
     bogus_id = admin_role.id + 999
-    db_session.add(
-        User(name="X", account="x", password_hash="h", role_id=bogus_id)
-    )
+    db_session.add(User(name="X", account="x", password_hash="h", role_id=bogus_id))
     with pytest.raises(IntegrityError):
         db_session.commit()
 
@@ -283,9 +282,7 @@ def test_run_rejects_invalid_material_id(
 def test_measurement_rejects_invalid_run_id(db_session: Session, run: Run) -> None:
     """A Measurement can't reference a run_id that doesn't exist."""
     bogus_id = run.id + 999
-    db_session.add(
-        Measurement(run_id=bogus_id, measurement_time=datetime(2026, 3, 9, 8, 0, 0))
-    )
+    db_session.add(Measurement(run_id=bogus_id, measurement_time=datetime(2026, 3, 9, 8, 0, 0)))
     with pytest.raises(IntegrityError):
         db_session.commit()
 

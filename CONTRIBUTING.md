@@ -45,7 +45,8 @@ and [decisions](docs/decisions.md).
   and verification evidence for the current commit.
 - No independent approving review is required while there's a single
   developer on the project.
-- All CI checks must pass (lint, backend-tests, frontend-tests — see
+- All CI checks must pass (lint, Windows/Linux backend-unit, mysql-integration,
+  and frontend-tests — see
   `.github/workflows/ci.yml`) before merging.
 - Prefer squash-merge so `main` history reads one commit per logical change.
 - Use [.github/pull_request_template.md](.github/pull_request_template.md).

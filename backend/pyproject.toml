@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.5",
     "pymysql>=1.1",
     "python-dotenv>=1.0",
+    "argon2-cffi>=25.1,<26",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,7 @@ addopts = "-ra"
 # So tests can import backend/scripts/* (a plain dev-scripts package, not
 # part of the installed app) regardless of how pytest was invoked.
 pythonpath = ["."]
+markers = ["mysql: requires the explicitly designated disposable MySQL 8.4 database"]
 
 [tool.ruff]
 line-length = 100

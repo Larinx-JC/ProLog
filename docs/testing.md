@@ -1,7 +1,6 @@
 # Testing and verification
 
-This plan applies to future section work. The distinction between existing CI
-and scheduled improvements is explicit below. See [project status](../PROJECT_STATUS.md)
+This plan covers implemented checks and future section work. See [project status](../PROJECT_STATUS.md)
 for the last verified implementation commit.
 
 ## Current checks
@@ -9,23 +8,33 @@ for the last verified implementation commit.
 | Check | Current evidence / scope |
 | --- | --- |
 | Backend lint and type checks | Ruff over backend files; mypy over `app`. |
-| Backend pytest | 43 tests at `e98da3f`, including SQLite ORM behavior, seed-verifier branches, and UTC assertions. |
+| Backend pytest | 130 unit/SQLite migration tests in Section 3, including authentication, ORM behavior, seed-verifier branches, UTC assertions and test dotenv isolation. |
 | SQLite constraints | Foreign keys enabled per test connection; structural CHECK rejection tests. |
-| Linux MySQL 8.4 CI | Alembic upgrade, `alembic check`, seeded codes/names/descriptions verification, and downgrade. |
+| Windows/Linux backend CI | Locked dependencies, `pip check`, Ruff, mypy and the unit/SQLite migration suite on both systems. |
+| Linux MySQL 8.4 CI | Upgrade/check/seeds/downgrade plus eight migrated behavior tests: concurrent bootstrap/activation/recovery/final-Admin changes, rollback, existing-user preservation, quantities, constraints, timestamps and real default-drift detection. |
 | Frontend | ESLint, one scaffold component test, TypeScript compilation, and Vite build. |
 
-The SQLite ORM suite currently creates tables from metadata. The MySQL CI
-steps validate the migration and seeds but do not yet run the ORM behavior
-suite against the migrated MySQL schema.
+The fast SQLite service/ORM fixtures create tables from metadata. A separate
+SQLite migration test upgrades existing synthetic data and detects deliberate
+default drift. MySQL tests run the actual migrations against the explicitly
+designated disposable `prolog_test` database; they never use `create_all`.
+See [the Section 3 review](reviews/section-03-review.md) for executed evidence.
+
+Authentication fixtures use `tests.settings.SettingsWithoutDotenv` to ignore
+developer dotenv files while retaining environment-variable loading and all
+production validators. This avoids passing the runtime-only `_env_file` option
+through Pydantic's editor-generated constructor signature. Targeted Pyright
+verification of these files is recorded in the review; CI continues to use
+Ruff/mypy plus runtime tests.
 
 ## Improvements and owners
 
 | Due | Required addition | Acceptance evidence |
 | --- | --- | --- |
-| Section 3 | Run backend unit tests on Windows and Linux with the locked dependencies. Keep the MySQL service job on Linux. | Both operating-system runs pass for the current PR head; include `pip check`. |
-| Section 3 | Separate app/script coverage from test-file execution and report behavior assertions. | Important success, rejection, and error branches are tested; coverage commands name their source scope. |
-| Section 3 | Use an injectable clock for session/invitation expiration tests; remove the existing sleep dependency in the update-timestamp test. | Before/at/after expiry cases are deterministic; `created_at` stays fixed and `updated_at` changes after a write. |
-| Section 3 | Add behavior tests using a disposable, migrated MySQL schema. | Decimal round trips, invalid FKs/rules, seed content, auth session storage, invitation races, and transaction rollback have real database assertions. |
+| Section 3 — implemented | Windows/Linux units, separate Linux MySQL job, locked dependencies and `pip check`. | Exact-head results are recorded in the review. |
+| Section 3 — implemented | App/script coverage excludes test-file execution. | Behavioral assertions cover success, rejection, expiry and persistence errors; percentage is supplementary. |
+| Section 3 — implemented | Injectable auth clock; controlled timestamp-update test. | Before/at/after expiry and unchanged creation time assertions use no sleeps. |
+| Section 3 — implemented | Migrated MySQL behavior tests. | Exact CHECK/FK error codes distinguish constraint rejection from unrelated database outages. |
 | Sections 4–5 | Test each production transition, permissions, immutable snapshots, and concurrent writes through the services/APIs. | Invalid transitions and stale requests cannot leave a partial write or a misleading success audit event. |
 | Sections 6–8 | Exercise query boundaries, permission filtering, export parsing, and ingestion deduplication. | Shared selection logic yields matching search/export data; malformed input and duplicate submissions have specified outcomes. |
 | Sections 9–14 | Add browser walkthroughs and role checks as screens arrive. | New run → record → abnormality → close → Admin review → export works through the actual UI. |
@@ -68,13 +77,18 @@ conda activate prolog
 cd D:\Program\Projects\ProLog\backend
 python -m ruff check .
 python -m mypy app
-python -m pytest -q
+python -m pytest -m 'not mysql' -q
 python -m pip check
 ```
 
 Check each command's exit code before proceeding. To request a scoped coverage
 report, run `python -m pytest --cov=app --cov=scripts --cov-report=term-missing`.
 This report is supplementary to behavioral acceptance tests.
+
+The MySQL suite skips when `PROLOG_TEST_MYSQL_URL` is unset. It refuses any
+driver/database other than `mysql+pymysql` / `prolog_test`, and deliberately
+resets that test database. CI creates it in an isolated MySQL 8.4 container.
+Run `python -m pytest tests/mysql -q` only against that disposable database.
 
 From `frontend/`: `npm ci`, `npm run lint`, `npm test -- --run`, and
 `npm run build`. Install only into project-specific environments.

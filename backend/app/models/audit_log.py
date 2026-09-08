@@ -54,4 +54,5 @@ class AuditLog(Base):
     actor: Mapped["User | None"] = relationship()
 
     def __repr__(self) -> str:
+        """Identify the audit action and target without dumping change details."""
         return f"AuditLog(action={self.action!r}, target_label={self.target_label!r})"

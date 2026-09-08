@@ -13,6 +13,7 @@ shouldn't have to trust. See docs/data-model.md.
 """
 
 from datetime import UTC, datetime
+from typing import Protocol
 
 
 def utcnow() -> datetime:
@@ -23,3 +24,19 @@ def utcnow() -> datetime:
     (local/server time) somewhere instead.
     """
     return datetime.now(UTC).replace(tzinfo=None)
+
+
+class Clock(Protocol):
+    """Injectable source of UTC-naive instants for service expiry decisions."""
+
+    def now(self) -> datetime:
+        """Return the current UTC instant without timezone metadata."""
+        ...
+
+
+class SystemClock:
+    """Production clock following the shared UTC storage convention."""
+
+    def now(self) -> datetime:
+        """Read the shared UTC helper rather than workstation-local time."""
+        return utcnow()

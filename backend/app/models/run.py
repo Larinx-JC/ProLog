@@ -67,7 +67,9 @@ class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     raw_material_batch: Mapped[str] = mapped_column(String(100))
     interval_seconds: Mapped[int] = mapped_column()
 
-    status: Mapped[RunStatus] = mapped_column(sa_enum(RunStatus), default=RunStatus.ACTIVE)
+    status: Mapped[RunStatus] = mapped_column(
+        sa_enum(RunStatus), default=RunStatus.ACTIVE, server_default="active"
+    )
     # Which status this run was in immediately before entering
     # PENDING_REVIEW (ACTIVE or ABNORMAL) -- None until it does.
     pending_from: Mapped[RunStatus | None] = mapped_column(sa_enum(RunStatus), default=None)
@@ -92,4 +94,5 @@ class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     )
 
     def __repr__(self) -> str:
+        """Identify the production run and its current lifecycle state."""
         return f"Run(run_code={self.run_code!r}, status={self.status!r})"
