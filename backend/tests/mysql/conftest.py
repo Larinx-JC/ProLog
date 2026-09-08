@@ -9,10 +9,11 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
 from alembic import command
-from app.core.config import Settings, get_settings
+from app.core.config import get_settings
 from app.core.security import Passwords
 from app.services.auth import AuthService
 from tests.auth_fixtures import FrozenClock
+from tests.settings import SettingsWithoutDotenv
 
 
 @pytest.fixture
@@ -33,7 +34,7 @@ def mysql_auth(monkeypatch: pytest.MonkeyPatch, passwords: Passwords):
         command.upgrade(config, "head")
         command.check(config)
         factory = sessionmaker(bind=engine, autoflush=False)
-        settings = Settings(_env_file=None, app_env="test", secret_key="integration-test-" * 4)
+        settings = SettingsWithoutDotenv(app_env="test", secret_key="integration-test-" * 4)
         yield AuthService(factory, settings, FrozenClock(), passwords)
     finally:
         engine.dispose()

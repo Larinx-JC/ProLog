@@ -8,7 +8,7 @@ for the last verified implementation commit.
 | Check | Current evidence / scope |
 | --- | --- |
 | Backend lint and type checks | Ruff over backend files; mypy over `app`. |
-| Backend pytest | 129 unit/SQLite migration tests in Section 3, including authentication, ORM behavior, seed-verifier branches and UTC assertions. |
+| Backend pytest | 130 unit/SQLite migration tests in Section 3, including authentication, ORM behavior, seed-verifier branches, UTC assertions and test dotenv isolation. |
 | SQLite constraints | Foreign keys enabled per test connection; structural CHECK rejection tests. |
 | Windows/Linux backend CI | Locked dependencies, `pip check`, Ruff, mypy and the unit/SQLite migration suite on both systems. |
 | Linux MySQL 8.4 CI | Upgrade/check/seeds/downgrade plus eight migrated behavior tests: concurrent bootstrap/activation/recovery/final-Admin changes, rollback, existing-user preservation, quantities, constraints, timestamps and real default-drift detection. |
@@ -19,6 +19,13 @@ SQLite migration test upgrades existing synthetic data and detects deliberate
 default drift. MySQL tests run the actual migrations against the explicitly
 designated disposable `prolog_test` database; they never use `create_all`.
 See [the Section 3 review](reviews/section-03-review.md) for executed evidence.
+
+Authentication fixtures use `tests.settings.SettingsWithoutDotenv` to ignore
+developer dotenv files while retaining environment-variable loading and all
+production validators. This avoids passing the runtime-only `_env_file` option
+through Pydantic's editor-generated constructor signature. Targeted Pyright
+verification of these files is recorded in the review; CI continues to use
+Ruff/mypy plus runtime tests.
 
 ## Improvements and owners
 

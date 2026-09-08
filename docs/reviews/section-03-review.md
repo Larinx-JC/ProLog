@@ -84,6 +84,29 @@ creating a real account or exposing the local database.
 - No external penetration test or availability guarantee is claimed. The section
   provides tested backend authentication controls for the agreed local/VPN design.
 
+## Post-handover editor diagnostic correction
+
+The owner reported a diagnostic at `tests/conftest.py:154` on `_env_file`.
+Pyright 1.1.413 reproduced `No parameter named "_env_file" (reportCallIssue)`
+using the dedicated `prolog` interpreter, although construction succeeded at
+runtime. Pydantic documents this runtime argument, but Pyright's generated
+model constructor did not expose it in this call.
+[Pydantic settings constructor documentation](https://pydantic.dev/docs/validation/latest/api/pydantic_settings/)
+
+Low severity, editor/type-checking compatibility: the shared test-only
+`SettingsWithoutDotenv` subclass sets `model_config.env_file=None`. Authentication
+unit/MySQL fixtures and configuration tests reuse it. Production Settings,
+interpreter configuration, schema and authentication behavior are unchanged;
+no diagnostic suppression was introduced.
+
+Reviewed the complete correction diff. Pyright reports zero errors/warnings
+for the five affected Python files. Ruff and mypy pass; the full local suite
+passes 130 tests with eight MySQL cases deselected. A new regression proves
+that a malformed local dotenv file is ignored, ordinary environment variables
+still load and validate, inherited encoding is retained, and production
+Settings still reads dotenv. The final targeted regression rerun also passed.
+Current follow-up CI evidence is recorded on PR #3 for its exact head.
+
 ## Approval boundary
 
 The owner has approved Section 2 and authorized this section only. Passing

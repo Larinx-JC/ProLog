@@ -19,7 +19,7 @@ Section 3 adds authentication, a new migration, and expanded verification.
 
 ## Section 3 verification
 
-Implementation head: `8a44eb4`, based on merged Section 2 `6b0509e`.
+Full-review implementation baseline: `8a44eb4`, based on merged Section 2 `6b0509e`.
 The full review covers every section file, including migrations, tests,
 dependencies, CI, documentation and the owner's confirmed D14–D18 choices.
 Findings and corrections are recorded in the [review](docs/reviews/section-03-review.md).
@@ -30,7 +30,10 @@ Local verification used only the existing `prolog` conda environment: 129 tests,
 Ruff, mypy and `pip check` passed; scoped app/script coverage was 924/926
 statements. The two uncovered statements are CLI/script module dispatch.
 MySQL was exercised in CI, not on a locally installed service.
-The final handover commit updates documentation; verify its own PR checks too.
+The subsequent owner-reported `_env_file` editor diagnostic is corrected in
+shared test configuration. Pyright now reports zero errors/warnings in the
+five affected files, and 130 local backend tests pass. See the review addendum
+and PR #3 for the latest correction and its exact-head CI evidence.
 
 ## Historical Section 2 baseline
 

@@ -4,9 +4,9 @@ import pytest
 from pydantic import ValidationError
 
 from app.cli import main
-from app.core.config import Settings
 from app.services.auth import AuthService
 from tests.auth_fixtures import PASSWORD, REPLACEMENT
+from tests.settings import SettingsWithoutDotenv
 
 
 @pytest.mark.parametrize(
@@ -25,22 +25,22 @@ from tests.auth_fixtures import PASSWORD, REPLACEMENT
 def test_invalid_auth_configuration(values: dict) -> None:
     """Reject invalid ranges/origins during configuration loading."""
     with pytest.raises(ValidationError):
-        Settings(_env_file=None, **values)
+        SettingsWithoutDotenv(**values)
 
 
 def test_production_requires_secure_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
     """Validate real environment loading, including production secrets and HTTPS."""
     monkeypatch.setenv("APP_ENV", "production")
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        SettingsWithoutDotenv()
     monkeypatch.setenv("PUBLIC_URL", "https://factory.test")
     monkeypatch.setenv("CORS_ORIGINS", "https://factory.test")
     monkeypatch.setenv("SECURE_COOKIES", "true")
     monkeypatch.setenv("SECRET_KEY", "short")
     with pytest.raises(ValidationError):
-        Settings(_env_file=None)
+        SettingsWithoutDotenv()
     monkeypatch.setenv("SECRET_KEY", "test-only-secret-with-more-than-32-characters")
-    assert Settings(_env_file=None).session_cookie == "__Host-prolog_session"
+    assert SettingsWithoutDotenv().session_cookie == "__Host-prolog_session"
 
 
 def test_cli_bootstrap_repetition_recovery_and_password_confirmation(

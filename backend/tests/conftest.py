@@ -10,7 +10,6 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import Settings
 from app.core.security import Passwords
 from app.db.session import Base
 from app.main import create_app
@@ -18,6 +17,7 @@ from app.models import AuthState, Material, Role, Run, RunStatus, User
 from app.models.role import ADMIN
 from app.services.auth import AuthService
 from tests.auth_fixtures import FrozenClock
+from tests.settings import SettingsWithoutDotenv
 
 
 @pytest.fixture
@@ -151,6 +151,6 @@ def auth(passwords: Passwords) -> Iterator[AuthService]:
             [Role(code=code, display_name=code) for code in ("admin", "operator", "reviewer")]
         )
         db.add(AuthState(id=1, bootstrap_completed=False))
-    settings = Settings(_env_file=None, app_env="test", secret_key="test-secret-" * 5)
+    settings = SettingsWithoutDotenv(app_env="test", secret_key="test-secret-" * 5)
     yield AuthService(factory, settings, FrozenClock(), passwords)
     engine.dispose()
