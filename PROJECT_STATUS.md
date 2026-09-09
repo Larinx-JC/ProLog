@@ -9,7 +9,7 @@ Updated: 2026-09-08. This is the starting point for project handovers.
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
 | 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
 | 3 — Authentication & Multi-Level Authorization | Owner verified and merged | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3), squash `f7bee48`; [full review](docs/reviews/section-03-review.md). |
-| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Authorized; acceptance plan prepared; product decisions pending | Branch `codex/section-04-run-lifecycle`; [Section 4 plan](docs/sections/04-run-lifecycle.md). No production service implementation yet. |
+| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Implemented; verification and full review in progress | Branch `codex/section-04-run-lifecycle`, draft PR #4; [acceptance](docs/sections/04-run-lifecycle.md), [implementation](docs/run-lifecycle.md), [accuracy settings](docs/sections/04-accuracy-settings.md). Owner verification pending. |
 | 5–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
@@ -79,9 +79,19 @@ and verified in Section 3; the original review remains historical evidence.
 
 The backend includes verified authentication services/APIs, local Admin setup,
 server-side sessions, activation/recovery grants, and related tests. Section 4
-now has a written acceptance plan. Factory timezone/units, deviation formula,
-rounding, completeness/closure and self-review questions await owner answers;
-dependent implementation will start after those choices are resolved.
+now has implemented domain services. The owner confirmed Asia/Shanghai, Ω/mm/m/min/m
+units, Admin self-review with a required audited reason, and an Admin-configurable
+initial 2.00% deviation tolerance. The owner then selected target deviation
+for the alarm, uniformity as a separate statistic, three-place thickness in mm,
+and an Admin accuracy settings portal. The outline now includes backend policy
+and storage in Section 4, endpoints in Section 5, and a new settings page in
+Section 11D. Migration `b6d84e19a203` adds six-place storage, immutable accuracy
+versions, operational settings, retry receipts and sampling/closure metadata.
+D24–D29 confirm rounding, completeness/closure, 0–6 supported places,
+factory-wide precision, current Operator controls and scheduled samples.
+Local checks passed for the initial implementation (220 backend tests, Ruff,
+mypy and pip check); additional review tests and exact-commit CI remain in progress.
+These local results are not Section 4 sign-off or MySQL verification.
 The React app remains a scaffold;
 authentication screens arrive in Section 9. Production services, operational
 screens, search, exports, ingestion, and deployment belong to later sections.
@@ -105,7 +115,9 @@ do not silently stage the directory during unrelated commits.
   unit CI, scoped coverage, deterministic clocks, and migrated MySQL behavior
   tests. The review records exact-run evidence and deployment limits.
 - Section 3 account/permission choices were confirmed in the owner replies.
-  Section 4 must settle calculation rules, factory timezone, and self-review.
+  Section 4 choices D19–D29 resolve Q04–Q06/Q12. The acceptance and implementation
+  documents record the selected calculations, defaults, controls, workflow,
+  migration and verification requirements.
 - Excel/PDF samples are requested in Section 7, as agreed.
 
 ## Section approval record

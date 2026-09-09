@@ -4,11 +4,15 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import Boolean, CheckConstraint, DateTime, Numeric, text
+from sqlalchemy.dialects.mysql import DATETIME
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.time import utcnow
 
-_DECIMAL = Numeric(10, 2)
+# Extra result capacity accommodates percentages against very small targets.
+PRODUCTION_DECIMAL = Numeric(24, 6)
+PRECISE_TIME = DateTime().with_variant(DATETIME(fsp=6), "mysql")
+_DECIMAL = PRODUCTION_DECIMAL
 
 
 class TimestampMixin:
@@ -23,8 +27,8 @@ class TimestampMixin:
     doesn't depend on the database server's timezone configuration.
     """
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
+    created_at: Mapped[datetime] = mapped_column(PRECISE_TIME, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(PRECISE_TIME, default=utcnow, onupdate=utcnow)
 
 
 class AbnormalityRulesMixin:

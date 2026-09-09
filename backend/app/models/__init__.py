@@ -8,12 +8,14 @@ from app.models.auth import AccessGrant, AuthState, AuthThrottle, LoginSession
 from app.models.enums import EntryMethod, MeasurementStatus, ReviewResolution, RunStatus
 from app.models.material import Material
 from app.models.measurement import Measurement
+from app.models.production import AccuracyVersion, ProductionRequest, ProductionSettings
 from app.models.role import Role
 from app.models.run import Run
 from app.models.user import User
 
 __all__ = [
     "AccessGrant",
+    "AccuracyVersion",
     "AuditLog",
     "AuthState",
     "AuthThrottle",
@@ -22,6 +24,8 @@ __all__ = [
     "LoginSession",
     "Measurement",
     "MeasurementStatus",
+    "ProductionRequest",
+    "ProductionSettings",
     "ReviewResolution",
     "Role",
     "Run",

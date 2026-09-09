@@ -26,12 +26,15 @@ are explicit deliverables within the existing sections.
    MeasurementService, AbnormalityDetector, and ReviewService own production
    writes. Define and test every transition, full rule copying, snapshot
    immutability, review consistency, audit atomicity, repeated requests, and
-   simultaneous edits. Add material-rule administration services and audit
-   events. Resolve self-review policy and calculation rules before coding
-   dependent behavior; see [decisions](decisions.md) and the
+   simultaneous edits. Add material-rule and accuracy-policy administration
+   services, audit events, and a new migration for configurable decimal
+   precision (initially three-place thickness). Use target deviation for
+   the alarm and show uniformity separately. Resolve remaining rounding and
+   completion choices before dependent code; see [decisions](decisions.md) and the
    [Section 4 acceptance plan](sections/04-run-lifecycle.md).
 5. **Backend API Layer** — production endpoints for runs, measurements,
-   closure, Admin review, materials, audit-log reads, and overview aggregates.
+   closure, Admin review, materials, accuracy settings, audit-log reads,
+   and overview aggregates. Accuracy-setting mutations are Admin-only.
    Reuse Section 3 authentication and Section 4 services; validate the API
    data contract. Raw ORM writes must not bypass production services.
 6. **Search System** — shared permission-aware filtering, sorting, and
@@ -54,8 +57,12 @@ are explicit deliverables within the existing sections.
     monitoring refresh behavior before implementation.
 11. **Frontend — Runs List Screen** — 11A: run search/list/detail and reusable
     filters/tables; 11B: materials standards list/add/edit/deactivate;
-    11C: permission-aware audit-log viewer. These are one section's explicit
-    deliverables, reusing Sections 5–6 APIs and common UI components.
+    11C: permission-aware audit-log viewer; 11D: new Admin Measurement & Accuracy
+    Settings page, covering numeric precision and material alarm configuration.
+    The new page extends the prototype; see the
+    [accuracy settings plan](sections/04-accuracy-settings.md).
+    These are one section's explicit deliverables, reusing Sections 5–6 APIs
+    and common UI components.
 12. **Frontend — Run Entry Screen** — new-run entry, active/abnormal runs,
     measurement recording, missing-data states, conflict feedback, and
     closure for review. Preserve server validation and decimal representation.
