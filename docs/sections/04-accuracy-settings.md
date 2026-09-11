@@ -66,7 +66,7 @@ work on their own Abnormal runs. Its initial value is enabled. Unlike captured
 numeric policy, this permission switch is checked against current settings on
 every write and takes effect immediately for existing runs.
 
-## Proposed class/data flow
+## Class/data flow and delivery sections
 
 ```mermaid
 flowchart LR
@@ -101,5 +101,5 @@ lock order so a run never sees a partially changed policy.
 8. Test populated upgrade, legacy interpretation, drift and lossless downgrade
    behavior against MySQL. Update the schema and operating documentation.
 
-Remaining lifecycle choices are tracked in the main
+Confirmed lifecycle choices are recorded in the main
 [Section 4 plan](04-run-lifecycle.md) and [decision register](../decisions.md).

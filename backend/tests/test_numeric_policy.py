@@ -101,3 +101,9 @@ def test_invalid_modes_groups_and_values() -> None:
             AccuracyPolicy().validate(value, "resistance")
         with pytest.raises(DomainError, match="result_out_of_range"):
             AccuracyPolicy().round(value)
+
+
+def test_rounding_cannot_overflow_storage_capacity() -> None:
+    """Reject a representable result whose configured rounding exceeds DECIMAL capacity."""
+    with pytest.raises(DomainError, match="result_out_of_range"):
+        AccuracyPolicy(result_places=0).round(Decimal("999999999999999999.999999"))

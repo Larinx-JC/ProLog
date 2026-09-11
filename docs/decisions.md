@@ -48,7 +48,7 @@ self-review, initial tolerance, the alarm formula, precision controls,
 completion, operational permissions and scheduling. The
 [Section 4 plan](sections/04-run-lifecycle.md) contains worked examples, and
 the [accuracy settings plan](sections/04-accuracy-settings.md) separates the
-new confirmed scope from proposed controls. Pending answers have not been assumed.
+confirmed controls and their delivery sections. No Section 4 product choices remain open.
 
 | ID | Due | Choice / proposed direction |
 | --- | --- | --- |

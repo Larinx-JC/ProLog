@@ -29,8 +29,8 @@ are explicit deliverables within the existing sections.
    simultaneous edits. Add material-rule and accuracy-policy administration
    services, audit events, and a new migration for configurable decimal
    precision (initially three-place thickness). Use target deviation for
-   the alarm and show uniformity separately. Resolve remaining rounding and
-   completion choices before dependent code; see [decisions](decisions.md) and the
+   the alarm and show uniformity separately. Apply the confirmed rounding,
+   completeness, scheduling and operational controls; see [decisions](decisions.md) and the
    [Section 4 acceptance plan](sections/04-run-lifecycle.md).
 5. **Backend API Layer** — production endpoints for runs, measurements,
    closure, Admin review, materials, accuracy settings, audit-log reads,

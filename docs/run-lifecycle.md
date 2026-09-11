@@ -123,6 +123,11 @@ Any failure rolls back the mutation, audit and receipt together.
 `RunService.schedule()` returns at most 200 virtual slots per page and a missing
 count without inserting empty rows or renewing the user's idle timeout. Slots
 at the exact closure instant count as due; after closure their count is frozen.
+`get_run()` currently returns all stored measurements for one run under the same
+lock. Section 5 must bound public response sizes, and Section 6 must implement
+query pagination/indexes and benchmark representative record volumes before
+large-scale operation. Request-receipt retention is likewise a deployment task;
+receipts currently persist indefinitely to retain reliable retry behavior.
 
 ## Database changes
 
@@ -147,6 +152,9 @@ values and statistics; their new target-result fields remain null. Current
 defaults use version 2 with three-place thickness and `target_v1` calculations.
 Legacy runs are readable but new production writes cannot reinterpret them;
 conversion of pre-service legacy runs requires an explicit migration policy.
+Their `missing_count` is null and scheduled-slot reads return
+`legacy_schedule_unavailable`: there is no evidence that the new schedule applied
+to those records. Do not interpret unavailable historical completeness as zero.
 No prototype records or images are imported by this revision.
 
 Downgrade checks existing numeric values before narrowing to scale 2 and refuses
@@ -155,6 +163,8 @@ receipt, target-statistic and closure metadata and narrows timestamps; it is a
 development rollback, not a way to archive production history. MySQL test
 fixtures clear only the explicitly named disposable `prolog_test` database
 between cases instead of weakening this numeric-loss guard.
+On MySQL, downgrade restores a supporting `run_id` index when necessary before
+removing the composite scheduled-slot index; the foreign key remains enforced.
 
 ## Verification and executable demonstration
 

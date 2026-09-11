@@ -1,15 +1,24 @@
 """End-to-end service invariants using real auth and foreign-key-enforced SQLite."""
 
 import json
-from dataclasses import replace
+from dataclasses import asdict, replace
 
 import pytest
 from sqlalchemy import event, func, select
 
 from app.domain.numeric import AccuracyPolicy, DomainError
-from app.models import AccuracyVersion, AuditLog, Measurement, ProductionRequest, Run, RunStatus
+from app.models import (
+    AccuracyVersion,
+    AuditLog,
+    Measurement,
+    ProductionRequest,
+    ProductionSettings,
+    Run,
+    RunStatus,
+)
 from app.services.auth import AuthService
 from app.services.auth_types import AuthError
+from app.services.production.base import stamp_update
 from tests.auth_fixtures import invite_login
 from tests.production_fixtures import MATERIAL_RULES, SAMPLE, ProductionCase, build_case, request_id
 
@@ -521,3 +530,214 @@ def test_review_of_previously_authored_measurement_is_self_review(case: Producti
         "Reviewed my earlier entry and its correction",
     )
     assert result.as_dict()["self_review"] is True
+
+
+@pytest.mark.parametrize("abnormal", [False, True])
+@pytest.mark.parametrize("resolution", ["approved", "confirmed_abnormal", "false_alarm", "unknown"])
+def test_review_resolution_matrix(case: ProductionCase, abnormal: bool, resolution: str) -> None:
+    """Allow only the final decisions defined for each captured pre-review state."""
+    run = case.start()
+    sample = case.sample(run, point_1="103.00" if abnormal else "100.00")
+    closed = case.runs.close(
+        case.admin.token, request_id(), run.id, sample.as_dict()["run_revision"]
+    )
+    permitted = {"confirmed_abnormal", "false_alarm"} if abnormal else {"approved"}
+    if resolution in permitted:
+        result = case.reviews.review(
+            case.admin.token, request_id(), run.id, closed.revision, resolution, "Checked"
+        )
+        assert result.as_dict()["review_resolution"] == resolution
+    else:
+        with pytest.raises(DomainError, match="invalid_review_resolution"):
+            case.reviews.review(
+                case.admin.token, request_id(), run.id, closed.revision, resolution, "Checked"
+            )
+        assert case.runs.get_run(case.admin.token, run.id).revision == closed.revision
+
+
+@pytest.mark.parametrize("allowed", [False, True])
+@pytest.mark.parametrize("operation", ["measurement", "close"])
+def test_operator_abnormal_control(case: ProductionCase, allowed: bool, operation: str) -> None:
+    """Apply the current Admin switch to both recording and closing an owned Abnormal run."""
+    _, operator = invite_login(case.auth, case.admin)
+    run = case.start(operator)
+    sample = case.sample(run, operator, point_1="103.00")
+    case.settings.update(
+        case.admin.token, request_id(), 1, AccuracyPolicy(), allowed, "Operational setting"
+    )
+
+    def write():
+        """Exercise the selected production action with current authority and revision."""
+        if operation == "close":
+            return case.runs.close(
+                operator.token, request_id(), run.id, sample.as_dict()["run_revision"]
+            )
+        return case.measurements.save(
+            operator.token,
+            request_id(),
+            run.id,
+            sample.as_dict()["run_revision"],
+            run.as_dict()["start_time"],
+            SAMPLE,
+        )
+
+    if allowed:
+        result = write().as_dict()
+        assert result.get("run_status", result["status"]) in {"abnormal", "pending_review"}
+    else:
+        with pytest.raises(AuthError, match="permission_denied"):
+            write()
+        assert (
+            case.runs.get_run(case.admin.token, run.id).revision == sample.as_dict()["run_revision"]
+        )
+
+
+def test_transition_retries_do_not_repeat_final_audits(case: ProductionCase) -> None:
+    """Retry closure and review after finalization without reapplying either transition."""
+    run = case.start()
+    sample = case.sample(run)
+    close_key, review_key = request_id(), request_id()
+    closed = case.runs.close(case.admin.token, close_key, run.id, sample.as_dict()["run_revision"])
+    final = case.reviews.review(
+        case.admin.token, review_key, run.id, closed.revision, "approved", "Checked"
+    )
+    assert (
+        case.runs.close(case.admin.token, close_key, run.id, sample.as_dict()["run_revision"])
+        == closed
+    )
+    assert (
+        case.reviews.review(
+            case.admin.token, review_key, run.id, closed.revision, "approved", "Checked"
+        )
+        == final
+    )
+    with case.auth.factory() as db:
+        for action in ("run_closed_for_review", "run_reviewed"):
+            assert db.scalar(select(func.count(AuditLog.id)).where(AuditLog.action == action)) == 1
+
+
+def test_edited_material_does_not_change_existing_run_alarm(case: ProductionCase) -> None:
+    """A target edit changes new runs while recording still evaluates the original snapshot."""
+    original = case.start()
+    case.materials.update(
+        case.admin.token,
+        request_id(),
+        case.material.id,
+        1,
+        dict(MATERIAL_RULES, standard_value="105.00"),
+        True,
+        "Updated target",
+    )
+    newer = case.start()
+    assert case.sample(original).as_dict()["alarm_codes"] == []
+    assert case.sample(newer).as_dict()["run_status"] == "abnormal"
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("end_time", None),
+        ("pending_from", None),
+        ("reviewed_by_id", 1),
+        ("reviewed_at", "now"),
+        ("review_resolution", "approved"),
+        ("review_reason", "Existing"),
+        ("missing_count_at_close", None),
+        ("missing_count_at_close", -1),
+        ("closure_exception_reason", None),
+    ],
+)
+def test_inconsistent_pending_state_cannot_be_reviewed(
+    case: ProductionCase,
+    field: str,
+    value: object,
+) -> None:
+    """Reject contradictory final metadata before a review can legitimize corrupted state."""
+    run = case.start()
+    closed = case.runs.close(case.admin.token, request_id(), run.id, run.revision, "Lost sample")
+    with case.auth.factory.begin() as db:
+        setattr(db.get(Run, run.id), field, case.auth.clock.now() if value == "now" else value)
+    with pytest.raises(DomainError, match="inconsistent_review_state"):
+        case.reviews.review(
+            case.admin.token, request_id(), run.id, closed.revision, "approved", "Checked"
+        )
+    with case.auth.factory() as db:
+        assert (
+            db.scalar(select(func.count(AuditLog.id)).where(AuditLog.action == "run_reviewed")) == 0
+        )
+
+
+def test_legacy_history_does_not_invent_missed_samples(case: ProductionCase) -> None:
+    """Legacy records remain readable without retroactively applying scheduled-sample rules."""
+    case.materials.update(
+        case.admin.token,
+        request_id(),
+        case.material.id,
+        1,
+        dict(MATERIAL_RULES, thickness_min="0.01", thickness_max="0.02"),
+        True,
+        "Legacy fixture",
+    )
+    run = case.start()
+    sample = case.sample(run, thickness="0.01")
+    with case.auth.factory.begin() as db:
+        db.add(
+            AccuracyVersion(
+                id=1,
+                **asdict(AccuracyPolicy(thickness_places=2)),
+                calculation_version="legacy",
+                created_at=case.auth.clock.now(),
+            )
+        )
+        db.flush()
+        legacy = db.get(Run, run.id)
+        legacy.accuracy_version_id = 1
+        stamp_update(legacy, case.auth.clock.now())
+    case.auth.clock.advance(120)
+    result = case.runs.get_run(case.admin.token, run.id).as_dict()
+    assert result["missing_count"] is None
+    assert result["measurements"][0]["id"] == sample.id
+    with pytest.raises(DomainError, match="legacy_schedule_unavailable"):
+        case.runs.schedule(case.admin.token, run.id)
+    with pytest.raises(DomainError, match="legacy_run_read_only"):
+        case.runs.close(case.admin.token, request_id(), run.id, sample.as_dict()["run_revision"])
+
+
+def test_missing_configuration_fails_closed(case: ProductionCase) -> None:
+    """Never guess settings when required configuration or a run policy is missing."""
+    run = case.start()
+    with case.auth.factory.begin() as db:
+        db.delete(db.get(ProductionSettings, 1))
+        db.get(Run, run.id).accuracy_version_id = None
+    with pytest.raises(DomainError, match="production_unavailable"):
+        case.settings.get(case.admin.token)
+    with pytest.raises(DomainError, match="accuracy_policy_unavailable"):
+        case.runs.get_run(case.admin.token, run.id)
+
+
+def test_unknown_runs_and_invalid_schedule_pages(case: ProductionCase) -> None:
+    """Report absent production records consistently and bound schedule resource use."""
+    for operation in (
+        lambda: case.runs.schedule(case.admin.token, 999999),
+        lambda: case.runs.close(case.admin.token, request_id(), 999999, 1),
+        lambda: case.reviews.review(
+            case.admin.token, request_id(), 999999, 1, "approved", "Checked"
+        ),
+    ):
+        with pytest.raises(DomainError, match="run_not_found"):
+            operation()
+    for offset, limit in ((-1, 100), (0, 201), (0, 0), (True, 1)):
+        with pytest.raises(DomainError, match="invalid_page"):
+            case.runs.schedule(case.admin.token, 1, offset, limit)
+
+
+def test_backwards_server_clock_cannot_close_before_last_write(case: ProductionCase) -> None:
+    """Preserve production chronology when the server clock moves behind its last write."""
+    _, operator = invite_login(case.auth, case.admin)
+    case.auth.clock.advance(10)
+    run = case.start(operator)
+    case.auth.clock.advance(-1)
+    with pytest.raises(DomainError, match="server_clock_moved_backwards"):
+        case.runs.close(case.admin.token, request_id(), run.id, run.revision, "No sample")
+    with case.auth.factory() as db:
+        assert db.get(Run, run.id).status == RunStatus.ACTIVE

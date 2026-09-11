@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-09-08. This is the starting point for project handovers.
+Updated: 2026-09-11. This is the starting point for project handovers.
 
 ## Current stage
 
@@ -9,7 +9,7 @@ Updated: 2026-09-08. This is the starting point for project handovers.
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
 | 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
 | 3 — Authentication & Multi-Level Authorization | Owner verified and merged | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3), squash `f7bee48`; [full review](docs/reviews/section-03-review.md). |
-| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Implemented; verification and full review in progress | Branch `codex/section-04-run-lifecycle`, draft PR #4; [acceptance](docs/sections/04-run-lifecycle.md), [implementation](docs/run-lifecycle.md), [accuracy settings](docs/sections/04-accuracy-settings.md). Owner verification pending. |
+| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Implemented; full review completed, final correction CI pending | Branch `codex/section-04-run-lifecycle`, draft PR #4; [full review](docs/reviews/section-04-review.md), [acceptance](docs/sections/04-run-lifecycle.md), [implementation](docs/run-lifecycle.md). Owner verification pending. |
 | 5–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
@@ -89,11 +89,18 @@ Section 11D. Migration `b6d84e19a203` adds six-place storage, immutable accuracy
 versions, operational settings, retry receipts and sampling/closure metadata.
 D24–D29 confirm rounding, completeness/closure, 0–6 supported places,
 factory-wide precision, current Operator controls and scheduled samples.
-Local checks passed for the initial implementation (220 backend tests, Ruff,
-mypy and pip check); additional review tests and exact-commit CI remain in progress.
-These local results are not Section 4 sign-off or MySQL verification.
+The full Section 4 diff was reviewed against `f7bee48` on 2026-09-11, including
+domain logic, services, migration, tests, dependency changes and documentation.
+The [review](docs/reviews/section-04-review.md) records corrected findings and
+acceptance evidence. MySQL CI passed all five jobs for `63dc7b6` in
+[run 34563625649](https://github.com/Larinx-JC/ProLog/actions/runs/34563625649),
+including the corrected rollback and independent-connection tests. Expanded
+review tests and the legacy completeness correction require their final CI run.
+Local final verification passed 254 backend tests, Ruff, mypy and `pip check`;
+scoped app/script coverage was 1,611/1,613 statements. Frontend lint, one test,
+TypeScript compilation and Vite build passed. MySQL is verified in CI only.
 The React app remains a scaffold;
-authentication screens arrive in Section 9. Production services, operational
+authentication screens arrive in Section 9. Production APIs, operational
 screens, search, exports, ingestion, and deployment belong to later sections.
 
 The local design is in `prototype/Production Dashboard Frontend/`, including

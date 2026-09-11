@@ -68,3 +68,15 @@ def test_reject_invalid_intervals(interval) -> None:
     """Reject invalid whole-second or out-of-storage-range scheduling intervals."""
     with pytest.raises(DomainError, match="invalid_interval"):
         SamplingSchedule(START, interval)
+
+
+def test_invalid_schedule_instants_and_slot_overflow() -> None:
+    """Reject mixed timezone inputs, backwards schedule time and unrepresentable slot dates."""
+    with pytest.raises(DomainError, match="utc_naive_required"):
+        SamplingSchedule(START.replace(tzinfo=UTC), 60)
+    schedule = SamplingSchedule(START, 60)
+    for until in (START - timedelta(seconds=1), START.replace(tzinfo=UTC)):
+        with pytest.raises(DomainError, match="invalid_schedule_time"):
+            schedule.due_count(until)
+    with pytest.raises(DomainError, match="invalid_slot"):
+        schedule.due_time(10**30)

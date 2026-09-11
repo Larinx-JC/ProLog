@@ -281,7 +281,9 @@ class ProductionStore:
             from app.services.production.runs import missing_count
 
             result["missing_count"] = (
-                row.missing_count_at_close
+                None
+                if result["calculation_version"] == "legacy"
+                else row.missing_count_at_close
                 if row.end_time is not None
                 else missing_count(db, row, self.auth.clock.now())
             )

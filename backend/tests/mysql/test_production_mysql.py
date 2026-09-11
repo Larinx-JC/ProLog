@@ -41,6 +41,7 @@ def race(*operations) -> list:
 def test_mysql_three_and_six_place_values_and_boundary_alarm(mysql_auth: AuthService) -> None:
     """MySQL preserves fractional thickness and exact boundary decisions after a fresh read."""
     case = build_case(mysql_auth)
+    case.auth.clock.advance(0.123456)
     case.settings.update(
         case.admin.token,
         request_id(),
@@ -58,6 +59,13 @@ def test_mysql_three_and_six_place_values_and_boundary_alarm(mysql_auth: AuthSer
     with case.auth.factory() as db:
         row = db.get(Measurement, sample.id)
         assert row.point_1 == Decimal("102.000001") and row.thickness == Decimal("0.006001")
+        assert row.measurement_time == row.recorded_at == case.auth.clock.now()
+        persisted_run = db.get(Run, run.id)
+        assert persisted_run.start_time == persisted_run.updated_at == case.auth.clock.now()
+        assert (
+            db.scalar(select(AuditLog.occurred_at).where(AuditLog.action == "measurement_recorded"))
+            == case.auth.clock.now()
+        )
 
 
 def test_mysql_concurrent_identical_request_creates_one_run(mysql_auth: AuthService) -> None:
@@ -82,16 +90,36 @@ def test_mysql_concurrent_measurement_edits_cannot_overwrite(mysql_auth: AuthSer
     """Exactly one write may consume a run revision; no last-writer-wins loss occurs."""
     case = build_case(mysql_auth)
     run = case.start()
+    original = case.sample(run)
 
     def operation():
-        """Submit a new request sharing the same optimistic run revision."""
-        return case.sample(run)
+        """Correct the same stored row through independent transactions and request IDs."""
+        return case.measurements.save(
+            case.admin.token,
+            request_id(),
+            run.id,
+            original.as_dict()["run_revision"],
+            run.as_dict()["start_time"],
+            dict(SAMPLE, point_1="101.00"),
+            slot_index=0,
+            measurement_id=original.id,
+            expected_revision=original.revision,
+            reason="Corrected transcription",
+        )
 
     results = race(operation, operation)
     assert results.count("revision_conflict") == 1
     with case.auth.factory() as db:
         assert db.scalar(select(func.count(Measurement.id))) == 1
-        assert db.get(Run, run.id).revision == 2
+        assert db.get(Run, run.id).revision == 3
+        row = db.get(Measurement, original.id)
+        assert row.revision == 2 and row.point_1 == Decimal("101.00")
+        assert (
+            db.scalar(
+                select(func.count(AuditLog.id)).where(AuditLog.action == "measurement_corrected")
+            )
+            == 1
+        )
 
 
 def test_mysql_measurement_versus_close(mysql_auth: AuthService) -> None:

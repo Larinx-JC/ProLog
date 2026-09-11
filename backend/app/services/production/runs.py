@@ -65,6 +65,8 @@ class RunService(ProductionStore):
             run = db.get(Run, identifier)
             if run is None:
                 raise DomainError("run_not_found", 404)
+            if self.policy(db, run.accuracy_version_id).calculation_version == "legacy":
+                raise DomainError("legacy_schedule_unavailable", 409)
             schedule = SamplingSchedule(run.start_time, run.interval_seconds)
             until = run.end_time or now
             total = schedule.due_count(until)

@@ -21,9 +21,10 @@ _DECIMAL = PRODUCTION_DECIMAL
 class Measurement(Base):
     """One row of detection data recorded within a Run.
 
-    average_value/max_deviation/deviation_percent are computed (from
-    point_1..point_4) when the row is marked complete, not entered
-    directly -- see the Section 4 AbnormalityDetector.
+    Statistics are computed from all four resistance points, even if another
+    required field is missing. max_deviation/deviation_percent retain their
+    uniformity meaning; target_deviation fields describe the alarm statistic.
+    See the Section 4 MeasurementCalculator and AbnormalityDetector.
 
     measurement_time/recorded_at are naive datetimes representing UTC by
     convention -- see app.core.time / docs/data-model.md.
