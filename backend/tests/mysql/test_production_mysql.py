@@ -116,8 +116,8 @@ def test_mysql_measurement_versus_close(mysql_auth: AuthService) -> None:
         assert db.get(Run, run.id).revision == 3
 
 
-def test_mysql_close_versus_review_and_double_review(mysql_auth: AuthService) -> None:
-    """Review cannot precede closure and two final decisions cannot both commit."""
+def test_mysql_close_versus_review(mysql_auth: AuthService) -> None:
+    """Review either follows the committed closure or explicitly rejects the earlier state."""
     case = build_case(mysql_auth)
     run = case.start()
     sample = case.sample(run)
@@ -131,16 +131,31 @@ def test_mysql_close_versus_review_and_double_review(mysql_auth: AuthService) ->
     )
     assert not isinstance(results[0], str)
     current = case.runs.get_run(case.admin.token, run.id)
-    if current.as_dict()["status"] == "pending_review":
-        results = race(
-            *[
-                lambda: case.reviews.review(
-                    case.admin.token, request_id(), run.id, current.revision, "approved", "Reviewed"
-                )
-                for _ in range(2)
-            ]
+    if isinstance(results[1], str):
+        assert results[1] == "revision_conflict"
+        assert current.as_dict()["status"] == "pending_review"
+    else:
+        assert current.as_dict()["status"] == "reviewed"
+
+
+def test_mysql_double_review(mysql_auth: AuthService) -> None:
+    """Always race two final decisions against the same eligible run revision."""
+    case = build_case(mysql_auth)
+    run = case.start()
+    sample = case.sample(run)
+    pending = case.runs.close(
+        case.admin.token, request_id(), run.id, sample.as_dict()["run_revision"]
+    )
+
+    def operation():
+        """Submit a distinct review request through an independent transaction."""
+        return case.reviews.review(
+            case.admin.token, request_id(), run.id, pending.revision, "approved", "Reviewed"
         )
-        assert sum(not isinstance(result, str) for result in results) == 1
+
+    results = race(operation, operation)
+    assert results.count("revision_conflict") == 1
+    assert sum(not isinstance(result, str) for result in results) == 1
     with case.auth.factory() as db:
         assert db.get(Run, run.id).status == RunStatus.REVIEWED
         assert (

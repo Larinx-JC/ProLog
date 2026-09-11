@@ -197,6 +197,16 @@ def downgrade() -> None:
             if incompatible:
                 raise RuntimeError("Cannot downgrade production precision without losing data")
     op.drop_table("production_requests")
+    if op.get_bind().dialect.name == "mysql":
+        # InnoDB may replace its implicit run_id FK index with our composite
+        # unique index. Restore support before dropping that composite index.
+        indexes = sa.inspect(op.get_bind()).get_indexes("measurements")
+        if not any(
+            index["name"] != "uq_measurement_run_slot"
+            and index["column_names"][:1] == ["run_id"]
+            for index in indexes
+        ):
+            op.create_index("run_id", "measurements", ["run_id"])
     with op.batch_alter_table("measurements") as batch:
         batch.drop_constraint("uq_measurement_run_slot", type_="unique")
         batch.drop_constraint("ck_measurement_slot", type_="check")
