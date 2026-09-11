@@ -3,7 +3,7 @@
 Status: owner-added scope, 2026-09-08. Backend implementation belongs to
 Section 4; production endpoints to Section 5; the new Admin page to Section
 11D. This extends the supplied prototype. The Section 4 backend and migration
-are implemented and undergoing verification; the API and page remain scheduled
+are implemented, reviewed and CI verified; the API and page remain scheduled
 for their approved later sections. See [implementation](../run-lifecycle.md).
 
 ## Confirmed behavior

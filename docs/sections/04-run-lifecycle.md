@@ -2,8 +2,9 @@
 
 Status: authorized by the owner on 2026-09-08. Section 3 merged as `f7bee48`;
 work proceeds on `codex/section-04-run-lifecycle`. Domain services and a new
-migration are implemented; local verification passed and MySQL CI/full-section
-review are in progress. See [implementation](../run-lifecycle.md).
+migration are implemented; local checks, full-section review and MySQL CI passed
+for `f344197`. Owner verification is pending. See the
+[full review](../reviews/section-04-review.md) and [implementation](../run-lifecycle.md).
 
 ## Purpose and scope
 

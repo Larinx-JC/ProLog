@@ -41,7 +41,7 @@ current section's checklist is [Section 4 run lifecycle](docs/sections/04-run-li
 The owner-added [Measurement & Accuracy Settings page](docs/sections/04-accuracy-settings.md)
 is planned for Section 11D, with its backend policy and storage prepared in
 Section 4. Initial thickness precision is three decimal places in mm;
-the Section 4 backend/migration are implemented and undergoing verification,
+the Section 4 backend/migration are implemented, reviewed and CI verified,
 while the API and settings page remain scheduled for their later sections.
 
 ```
@@ -90,7 +90,8 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 ## Status
 
 Sections 1–3 are verified and merged. Section 4's service layer and migration
-are implemented and undergoing verification and full review. See the
+are implemented, fully reviewed and CI verified; owner verification is pending.
+See the [full review](docs/reviews/section-04-review.md),
 [implementation guide](docs/run-lifecycle.md) and status page for evidence.
 
 The React application is currently a scaffold. See

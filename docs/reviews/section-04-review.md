@@ -3,10 +3,10 @@
 Reviewed on 2026-09-11 against Section 3 base
 `f7bee48d5fc8d43f83fc774c28e753421f7f3aef`. The review covers the entire section,
 including the acceptance plan in `28bf736`, implementation in `4b2ce8a`, MySQL
-correction in `63dc7b6`, and the follow-up changes recorded below.
+correction in `63dc7b6`, and final follow-up implementation `f344197`.
 
 Result: no remaining blocking finding in the authorized domain-service scope.
-Final CI for the follow-up commit is pending. Section 4 awaits owner verification;
+Final implementation CI passed all five jobs. Section 4 awaits owner verification;
 PR #4 remains draft and unmerged. Section 5 has not been authorized.
 
 ## Scope and method
@@ -70,8 +70,12 @@ index is added. The fix preserves support throughout downgrade.
 - MySQL correction baseline: all five jobs passed for `63dc7b6` in
   [CI 34563625649](https://github.com/Larinx-JC/ProLog/actions/runs/34563625649),
   including migrate/seed, persistence/race/rollback tests and final drift/downgrade.
-- Final follow-up CI and exact commit: pending; do not treat the baseline run
-  above as verification of subsequent changes.
+- Final implementation commit: `f3441973a89710a2f37c7affe0b53a1fa85f2874`.
+  [CI 34567271585](https://github.com/Larinx-JC/ProLog/actions/runs/34567271585)
+  passed all five jobs. Actual logs confirm 254 passed/19 deselected on each
+  Windows/Linux unit runner and **19 passed** in MySQL (none skipped), plus
+  seed, drift, downgrade and frontend checks. Subsequent handover changes only
+  update documentation; the PR records checks for that documentation head.
 
 ## Limits and follow-up obligations
 

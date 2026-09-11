@@ -9,7 +9,7 @@ Updated: 2026-09-11. This is the starting point for project handovers.
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
 | 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
 | 3 — Authentication & Multi-Level Authorization | Owner verified and merged | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3), squash `f7bee48`; [full review](docs/reviews/section-03-review.md). |
-| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Implemented; full review completed, final correction CI pending | Branch `codex/section-04-run-lifecycle`, draft PR #4; [full review](docs/reviews/section-04-review.md), [acceptance](docs/sections/04-run-lifecycle.md), [implementation](docs/run-lifecycle.md). Owner verification pending. |
+| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Implemented, fully reviewed and CI verified; awaiting owner verification | Branch `codex/section-04-run-lifecycle`, draft PR #4; [full review](docs/reviews/section-04-review.md), [acceptance](docs/sections/04-run-lifecycle.md), [implementation](docs/run-lifecycle.md). Unmerged; Section 5 remains gated. |
 | 5–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
@@ -94,8 +94,13 @@ domain logic, services, migration, tests, dependency changes and documentation.
 The [review](docs/reviews/section-04-review.md) records corrected findings and
 acceptance evidence. MySQL CI passed all five jobs for `63dc7b6` in
 [run 34563625649](https://github.com/Larinx-JC/ProLog/actions/runs/34563625649),
-including the corrected rollback and independent-connection tests. Expanded
-review tests and the legacy completeness correction require their final CI run.
+including the corrected rollback and independent-connection tests. The final
+reviewed implementation `f3441973a89710a2f37c7affe0b53a1fa85f2874` passed all five
+jobs in [CI 34567271585](https://github.com/Larinx-JC/ProLog/actions/runs/34567271585):
+254 backend tests on each Windows/Linux runner, 19 actual MySQL integration
+tests, migration/seed/drift/downgrade checks, lint and frontend lint/test/build.
+Follow-up changes only record this evidence and update the section handover.
+The PR's checks identify the current documentation head separately.
 Local final verification passed 254 backend tests, Ruff, mypy and `pip check`;
 scoped app/script coverage was 1,611/1,613 statements. Frontend lint, one test,
 TypeScript compilation and Vite build passed. MySQL is verified in CI only.
