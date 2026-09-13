@@ -27,13 +27,13 @@ are explicit deliverables within the existing sections.
    writes. Define and test every transition, full rule copying, snapshot
    immutability, review consistency, audit atomicity, repeated requests, and
    simultaneous edits. Add material-rule and accuracy-policy administration
-   services, audit events, and a new migration for configurable decimal
+   services, independent global display-rounding settings, audit events, and migrations for decimal
    precision (initially three-place thickness). Use target deviation for
    the alarm and show uniformity separately. Apply the confirmed rounding,
    completeness, scheduling and operational controls; see [decisions](decisions.md) and the
    [Section 4 acceptance plan](sections/04-run-lifecycle.md).
 5. **Backend API Layer** — production endpoints for runs, measurements,
-   closure, Admin review, materials, accuracy settings, audit-log reads,
+   closure, Admin review, materials, recording/display settings, audit-log reads,
    and overview aggregates. Accuracy-setting mutations are Admin-only.
    Reuse Section 3 authentication and Section 4 services; validate the API
    data contract. Raw ORM writes must not bypass production services.
@@ -58,7 +58,9 @@ are explicit deliverables within the existing sections.
 11. **Frontend — Runs List Screen** — 11A: run search/list/detail and reusable
     filters/tables; 11B: materials standards list/add/edit/deactivate;
     11C: permission-aware audit-log viewer; 11D: new Admin Measurement & Accuracy
-    Settings page, covering numeric precision and material alarm configuration.
+    Settings page, covering recording precision, current global display rounding
+    and material alarm configuration. Display preferences apply across all screens
+    to existing and new runs, while edit controls retain exact recorded values.
     The new page extends the prototype; see the
     [accuracy settings plan](sections/04-accuracy-settings.md).
     These are one section's explicit deliverables, reusing Sections 5–6 APIs

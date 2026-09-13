@@ -81,15 +81,50 @@ The pinned `tzdata` package supports Windows environments without system IANA da
 
 ## Classes and data flow
 
+### Current screen rounding (D30)
+
+Recording accuracy is captured by each run. Current **display** accuracy is a
+separate factory-wide singleton: Admin may choose 0–6 places per group and
+half-up/half-even independently. Changes apply to all current screens, including
+existing, Reviewed and legacy runs. The next read uses the current preference;
+no measurement, material, original calculated result, run snapshot or historical
+audit JSON is rewritten. Recording-policy changes do not change display preferences.
+
+`DisplaySettingsService.get()` is available to all permitted readers without
+renewing idle time; `update()` is Admin-only, requires a reason and expected
+revision, and uses the same atomic audit/retry mechanism. `DisplayFormatter`
+reuses validated numeric precision and shared field mappings without imposing
+recording-precision limits on presentation. A displayed carry beyond the maximum
+stored number is allowed because it is only text; it cannot be submitted as a
+new valid physical value.
+
+`get_run()` retains canonical values and adds `display.settings`, rounded
+`display.rules`, and `measurements[i].display`. One read uses one settings
+revision consistently. For example, canonical `point_1="102.004"` may have
+`display.point_1="102.00"` and still carry a target alarm. Missing values stay
+null and zero stays a recorded zero. Canonical values initialize edit controls
+and drive data exports; display strings must never be written back as readings.
+Mutation receipts remain canonical and stable across preference changes. After
+a mutation/retry, clients refresh the current read projection for display.
+
+Section 5 exposes these contracts and shared formatting for future aggregate,
+material and audit screens. Sections 9–14 must consistently use the current
+display preference, retain visible alarm state, and expose original values in
+details/edit controls. Cache preferences by their revision; refreshing an existing
+run must reflect a newer preference. Export-file formatting is specified in
+Section 7; current screen preferences do not silently rewrite exported data.
+
 ```mermaid
 classDiagram
     ProductionStore <|-- AccuracySettingsService
+    ProductionStore <|-- DisplaySettingsService
     ProductionStore <|-- MaterialService
     ProductionStore <|-- RunService
     ProductionStore <|-- MeasurementService
     ProductionStore <|-- ReviewService
     ProductionStore --> AuthService : current sessions and writer lock
     ProductionStore --> Document : immutable result
+    ProductionStore --> DisplayFormatter : current rounded read copies
     AccuracySettingsService --> AccuracyPolicy : immutable value
     RunService --> Rules : complete snapshot
     RunService --> SamplingSchedule : due and missing slots
@@ -132,11 +167,13 @@ receipts currently persist indefinitely to retain reliable retry behavior.
 ## Database changes
 
 New revision: `b6d84e19a203` after `7a9b31c4d502`; approved migrations are unchanged.
+Display amendment: `c2a54f8d7109` after `b6d84e19a203`.
 
 | Table | New or changed structure |
 | --- | --- |
 | accuracy_versions | Integer PK; five integer scale fields with 0–6 checks; rounding choice check; calculation version; UTC creation time and optional creator FK. Append-only through services. |
 | production_settings | Singleton PK 1; current accuracy-version FK; immediate Operator Abnormal-work Boolean (initial true); optimistic revision. |
+| display_settings | Singleton PK 1; five integer scales 0–6; half-up/half-even mode; positive revision; UTC microsecond update time and optional updating-Admin FK. No run snapshot references this current presentation table. |
 | production_requests | Composite PK actor FK + request UUID; operation, payload SHA-256, JSON result, UTC timestamp. |
 | materials | Integer revision; six-place numeric capacity; microsecond event timestamps. |
 | runs | Integer revision; accuracy-version FK; missing-count-at-close and closure-exception reason; six-place rule capacity; microsecond events. |
@@ -165,6 +202,10 @@ fixtures clear only the explicitly named disposable `prolog_test` database
 between cases instead of weakening this numeric-loss guard.
 On MySQL, downgrade restores a supporting `run_id` index when necessary before
 removing the composite scheduled-slot index; the foreign key remains enforced.
+The display amendment copies current factory precision once during upgrade.
+Its downgrade removes display preferences only and leaves production rows
+unchanged. Downgrading further can discard other Section 4 metadata; the older
+numeric-loss guard applies before that older revision narrows production columns.
 
 ## Verification and executable demonstration
 

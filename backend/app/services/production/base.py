@@ -13,11 +13,13 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
-from app.domain.measurements import Readings, Rules
+from app.domain.display import MEASUREMENT_QUANTITIES, RULE_QUANTITIES, DisplayFormatter
+from app.domain.measurements import Rules
 from app.domain.numeric import AccuracyPolicy, DomainError
 from app.models import (
     AccuracyVersion,
     AuditLog,
+    DisplaySettings,
     Material,
     Measurement,
     ProductionRequest,
@@ -73,8 +75,8 @@ def snapshot(row: object, value_type: type) -> dict:
     return {field.name: getattr(row, field.name) for field in fields(value_type)}
 
 
-def policy_from(row: AccuracyVersion) -> AccuracyPolicy:
-    """Create an immutable policy from a stored version, excluding persistence metadata."""
+def policy_from(row: AccuracyVersion | DisplaySettings) -> AccuracyPolicy:
+    """Copy validated precision choices, excluding persistence and lifecycle metadata."""
     return AccuracyPolicy(**snapshot(row, AccuracyPolicy))
 
 
@@ -168,6 +170,25 @@ class ProductionStore:
         if row is None:
             raise DomainError("accuracy_policy_unavailable", 409)
         return row
+
+    @staticmethod
+    def display_settings(db: Session) -> DisplaySettings:
+        """Require the migrated current presentation settings instead of guessing preferences."""
+        row = db.get(DisplaySettings, 1)
+        if row is None:
+            raise DomainError("display_settings_unavailable", 503)
+        return row
+
+    def display_document(self, db: Session) -> dict:
+        """Describe one consistent presentation revision for readers and Admin audit records."""
+        row = self.display_settings(db)
+        return dict(
+            id=1,
+            revision=row.revision,
+            precision=asdict(policy_from(row)),
+            updated_at=row.updated_at,
+            updated_by_id=row.updated_by_id,
+        )
 
     def writable_run(self, db: Session, actor: User, identifier: int, expected: int) -> Run:
         """Apply ownership, current abnormal-work settings, legacy and lifecycle protections."""
@@ -287,32 +308,22 @@ class ProductionStore:
                 if row.end_time is not None
                 else missing_count(db, row, self.auth.clock.now())
             )
+            presentation = self.display_document(db)
+            formatter = DisplayFormatter(AccuracyPolicy(**presentation["precision"]))
+            result["display"] = dict(
+                settings=presentation, rules=formatter.project(result["rules"], RULE_QUANTITIES)
+            )
+            for measurement in result["measurements"]:
+                measurement["display"] = formatter.project(measurement, MEASUREMENT_QUANTITIES)
             return Document(json_text(result))
 
     @staticmethod
     def measurement_document(row: Measurement, policy: AccuracyPolicy) -> dict:
         """Format each physical value and result using its run's captured precision."""
-        values = snapshot(row, Readings)
-        for name, value in values.items():
-            group = (
-                "resistance"
-                if name.startswith("point_")
-                else {
-                    "thickness": "thickness",
-                    "meter_count": "length",
-                    "speed": "speed",
-                }[name]
-            )
-            values[name] = policy.format(value, group) if value is not None else None
-        for name in (
-            "average_value",
-            "max_deviation",
-            "deviation_percent",
-            "target_deviation",
-            "target_deviation_percent",
-        ):
+        values = {}
+        for name, group in MEASUREMENT_QUANTITIES.items():
             value = getattr(row, name)
-            values[name] = policy.format(value) if value is not None else None
+            values[name] = policy.format(value, group) if value is not None else None
         return dict(
             id=row.id,
             revision=row.revision,
@@ -331,9 +342,6 @@ class ProductionStore:
 def formatted_rules(row: object, policy: AccuracyPolicy) -> dict:
     """Format a material or captured run rule set using one shared field/unit mapping."""
     values = snapshot(row, Rules)
-    for name in ("standard_value", "upper_limit", "lower_limit"):
-        values[name] = policy.format(values[name], "resistance")
-    for name in ("thickness_min", "thickness_max"):
-        values[name] = policy.format(values[name], "thickness")
-    values["deviation_pct_threshold"] = policy.format(values["deviation_pct_threshold"])
+    for name, group in RULE_QUANTITIES.items():
+        values[name] = policy.format(values[name], group)
     return values

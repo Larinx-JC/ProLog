@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import JSON, Boolean, CheckConstraint, ForeignKey, String, text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.time import utcnow
 from app.db.session import Base
 from app.models.mixins import PRECISE_TIME
 
@@ -61,3 +62,29 @@ class ProductionRequest(Base):
     payload_digest: Mapped[str] = mapped_column(String(64))
     result: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(PRECISE_TIME)
+
+
+class DisplaySettings(Base):
+    """Current factory-wide presentation, never referenced as a run's recording policy."""
+
+    __tablename__ = "display_settings"
+    __table_args__ = (
+        CheckConstraint("id = 1", name="ck_display_settings_singleton"),
+        CheckConstraint("revision > 0", name="ck_display_settings_revision"),
+        *(
+            CheckConstraint(f"{name}_places BETWEEN 0 AND 6", name=f"ck_display_{name}")
+            for name in ("resistance", "thickness", "speed", "length", "result")
+        ),
+        CheckConstraint("rounding IN ('half_up', 'half_even')", name="ck_display_rounding"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    resistance_places: Mapped[int] = mapped_column(default=2, server_default="2")
+    thickness_places: Mapped[int] = mapped_column(default=3, server_default="3")
+    speed_places: Mapped[int] = mapped_column(default=2, server_default="2")
+    length_places: Mapped[int] = mapped_column(default=2, server_default="2")
+    result_places: Mapped[int] = mapped_column(default=2, server_default="2")
+    rounding: Mapped[str] = mapped_column(String(16), default="half_up", server_default="half_up")
+    revision: Mapped[int] = mapped_column(default=1, server_default="1")
+    updated_at: Mapped[datetime] = mapped_column(PRECISE_TIME, default=utcnow)
+    updated_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))

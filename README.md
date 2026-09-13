@@ -43,6 +43,9 @@ is planned for Section 11D, with its backend policy and storage prepared in
 Section 4. Initial thickness precision is three decimal places in mm;
 the Section 4 backend/migration are implemented, reviewed and CI verified,
 while the API and settings page remain scheduled for their later sections.
+Admin-adjustable screen rounding is now separate from recording accuracy and
+applies to existing and new runs. Canonical values and alarm results remain
+unchanged; see the current display amendment in the status and review documents.
 
 ```
 backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest

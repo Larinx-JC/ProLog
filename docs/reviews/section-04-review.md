@@ -8,6 +8,8 @@ correction in `63dc7b6`, and final follow-up implementation `f344197`.
 Result: no remaining blocking finding in the authorized domain-service scope.
 Final implementation CI passed all five jobs. Section 4 awaits owner verification;
 PR #4 remains draft and unmerged. Section 5 has not been authorized.
+The subsequent owner-confirmed D30 display amendment is reviewed below; its
+CI evidence is separate from the preceding implementation baseline.
 
 ## Scope and method
 
@@ -100,7 +102,53 @@ index is added. The fix preserves support throughout downgrade.
   Physical instruments, real production datasets, Windows service deployment,
   export layouts and machine ingestion remain unverified in this section.
 
+## Display amendment review — D30, 2026-09-11
+
+The owner confirmed that current display rounding applies to all interfaces,
+including existing runs, without modifying stored data. Reviewed the combined
+Section 4 diff against `f7bee48` using the full review above for unchanged files
+and inspecting every new/modified model, migration, formatter, service, test and
+document in this amendment. No new blocking code finding was identified.
+
+- Independent `display_settings` singleton, 0–6 scale/rounding constraints,
+  positive optimistic revision, UTC timestamp and updating-user FK. Migration
+  `c2a54f8d7109` extends the existing revision and copies current factory precision
+  once. Both directions preserve all production rows; dropping the display
+  revision discards presentation preferences only.
+- Shared Decimal formatter and field mappings; canonical API/edit values remain
+  separate from current rounded strings. No production write or alarm function
+  reads the new display settings. Increasing display precision pads available
+  values without claiming additional recorded accuracy.
+- Admin-only audited updates with current auth, reason, revision and durable
+  receipts. All permitted roles can read preferences; background reads cannot
+  extend idle sessions. Rendering uses one settings revision within the same
+  transaction, including every measurement and the run's material-rule display.
+- Tests compare actual persisted material/run/measurement/policy rows and old
+  audit payloads before and after display changes. Coverage includes Active,
+  Abnormal, Pending Review, Reviewed and legacy histories, new runs, exact edit
+  values, preserved alarms, both rounding modes, null/zero, and display carries.
+- Rejection/recovery tests cover role denial, expiry, stale/conflicting requests,
+  absent settings and audit-insert rollback. Actual migrated SQLite tests check
+  all scale/rounding/revision/singleton constraints and the updating-user FK.
+  MySQL tests additionally cover populated preservation and simultaneous
+  settings writes versus a coherent run read.
+- Review corrections: keep display carries independent of storage range checks;
+  type the migration's timestamp bind to avoid Python's deprecated implicit
+  SQLite adapter; preserve immutable mutation receipts and refresh display via
+  current reads rather than persisting presentation in production audit events.
+
+The backend and documentation are implemented. Local verification passed **283
+backend tests**, with 22 MySQL tests deselected; Ruff and mypy (44 source files)
+passed. App/script coverage is 1,687/1,689 statements; only the existing two
+module-dispatch lines are uncovered. Exact-head MySQL/Windows/Linux CI is pending. Frontend
+pages and HTTP endpoints retain their existing section assignments. Their future
+acceptance must include consistent current rounding across screens, visible alarm
+state, original values in details and exact values when entering edit mode.
+
 ## Approval boundary
 
-Only the owner's explicit verification can approve Section 4 and authorize
-Section 5. Passing this review or CI does not merge PR #4 or advance the project.
+On 2026-09-13 the owner explicitly approved Section 4 and authorized Section 5:
+"ok, I approve the implementation for 4 and lets start section 5".
+The combined re-review and migration correction are recorded in
+[the Sections 3–4 report](section-03-04-review.md). Final closeout CI precedes
+merge; project status records the actual merge and Section 5 baseline.

@@ -1,6 +1,6 @@
 # Project decisions
 
-Updated: 2026-09-08. This register separates confirmed choices from proposals.
+Updated: 2026-09-11. This register separates confirmed choices from proposals.
 Update a decision here when the owner resolves it; keep the evidence and
 section state in [project status](../PROJECT_STATUS.md).
 
@@ -37,6 +37,7 @@ section state in [project status](../PROJECT_STATUS.md).
 | D27 | Operators may record/correct and close their own Active or Abnormal runs initially. Admin may change whether Operators can work on Abnormal runs. Abnormal status remains sticky until review, and missing-data closure still requires Admin. This extends D16's earlier Active-only wording. | Owner: "allow them for now but allow admin change", 2026-09-08. |
 | D28 | Track scheduled samples from run start at each configured interval and count missed samples at closure; also permit extra manual samples. | Owner selected scheduled plus manual samples, 2026-09-08. |
 | D29 | Material target must be positive. Readings, thickness, speed and length are nonnegative; zero is a real reading, not absence. Exact tolerance boundaries pass. Measurement times lie between run start and current server time, preserving measurement and actual recording times separately for late entry. | Owner accepted validation rules, 2026-09-08. |
+| D30 | Display rounding is a separate current factory-wide setting, applying across all interfaces to existing and new runs, including Reviewed and legacy records. Admin can adjust per-quantity places and rounding independently of recording accuracy. Stored values, captured run policies, original statistics, alarms and historical audit records remain unchanged. | Owner confirmed "update the setting should just generally change all the interface, including exiisting run, data is not affected anyway", 2026-09-11. |
 
 ## Scheduled decisions
 
@@ -48,7 +49,10 @@ self-review, initial tolerance, the alarm formula, precision controls,
 completion, operational permissions and scheduling. The
 [Section 4 plan](sections/04-run-lifecycle.md) contains worked examples, and
 the [accuracy settings plan](sections/04-accuracy-settings.md) separates the
-confirmed controls and their delivery sections. No Section 4 product choices remain open.
+confirmed controls and their delivery sections. On 2026-09-11 the owner requested
+rounded measurement display with an Admin setting to change it, then confirmed
+D30's independent current presentation for existing and new runs. Recording
+accuracy and current screen display are separate policies; Q13 is resolved.
 
 | ID | Due | Choice / proposed direction |
 | --- | --- | --- |
@@ -61,6 +65,7 @@ confirmed controls and their delivery sections. No Section 4 product choices rem
 | Q10 | Before Section 10 | Refresh interval/delivery and stale-data behavior. Proposed initial approach: browser polling; server session timeouts still apply. |
 | Q11 | Before Section 15 | Windows service host, network topology, HTTPS certificates, and backup encryption/retention with restore procedure. |
 | Q12 | Resolved | D24/D25 confirm factory-wide precision, supported 0–6 places and configurable rounding captured by each run. A decrease must not rewrite historical measurements or silently round current material standards. |
+| Q13 | Resolved | D30 confirms independent current display precision across existing and new runs; preserve recorded data, captured accuracy, calculations and alarm decisions. |
 
 ## Change discipline
 

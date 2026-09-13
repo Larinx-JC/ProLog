@@ -5,6 +5,8 @@ work proceeds on `codex/section-04-run-lifecycle`. Domain services and a new
 migration are implemented; local checks, full-section review and MySQL CI passed
 for `f344197`. Owner verification is pending. See the
 [full review](../reviews/section-04-review.md) and [implementation](../run-lifecycle.md).
+The owner's subsequent D30 amendment adds independent global display rounding;
+see the review addendum for its verification, separately from the earlier baseline.
 
 ## Purpose and scope
 
@@ -135,6 +137,7 @@ Keep shared transaction, validation, snapshot and audit code in one place.
 | DOMAIN-13 | All authoritative times use UTC; normalize accepted Asia/Shanghai factory inputs consistently, including clock/date boundaries. Use confirmed Ω, mm, m/min and m units with captured precision. | Injected-clock and Shanghai/UTC date-boundary tests; unit and approved precision examples. |
 | DOMAIN-14 | Any schema additions extend the approved migrations without rewriting their operations; existing data/roles/auth survive upgrade. | Populated MySQL upgrade/check/seed/downgrade, schema constraints and drift tests. |
 | DOMAIN-15 | Important service functions are documented and tested; workflow/data flow, variables, class relationships and operating examples are current. | Function/doc review, executable synthetic lifecycle demonstration and full section diff review. |
+| DOMAIN-16 | Admin-controlled current display precision/mode applies to every existing/new run without changing recorded data, captured accuracy or alarm decisions. | Every run state including legacy; actual persisted-row/audit equality; halfway/null/zero cases; Admin-only changes, current-authority reads, retries/rollback/concurrency and populated migration preservation. |
 
 ## Implementation sequence
 

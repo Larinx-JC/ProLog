@@ -1,6 +1,6 @@
 # Project status
 
-Updated: 2026-09-11. This is the starting point for project handovers.
+Updated: 2026-09-13. This is the starting point for project handovers.
 
 ## Current stage
 
@@ -9,8 +9,9 @@ Updated: 2026-09-11. This is the starting point for project handovers.
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
 | 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
 | 3 — Authentication & Multi-Level Authorization | Owner verified and merged | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3), squash `f7bee48`; [full review](docs/reviews/section-03-review.md). |
-| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Implemented, fully reviewed and CI verified; awaiting owner verification | Branch `codex/section-04-run-lifecycle`, draft PR #4; [full review](docs/reviews/section-04-review.md), [acceptance](docs/sections/04-run-lifecycle.md), [implementation](docs/run-lifecycle.md). Unmerged; Section 5 remains gated. |
-| 5–16 | Planned | [Current outline](docs/outline.md). |
+| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Owner approved; final closeout CI pending | Branch `codex/section-04-run-lifecycle`, PR #4; display amendment includes the R34-02 offline SQL correction. R34-01 remains a tracked legacy-account follow-up. |
+| 5 — Backend API Layer | Owner authorized; preparation underway | Production APIs will reuse the approved authentication/domain services; branch starts after Section 4 closeout. |
+| 6–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
 authorized Section 3 on 2026-09-07. The remaining non-blocking default-parity
@@ -24,6 +25,24 @@ Section 4. The exact approved head `21e7c6a` had all five checks passing in
 PR #3 was merged, and Section 4's branch starts from squash `f7bee48`.
 
 ## Section 3 verification
+
+On 2026-09-13 the owner stated: "ok, I approve the implementation for 4 and
+lets start section 5". This explicitly verifies Section 4 and authorizes
+Section 5. R34-02 is corrected by binding the timestamp into the migration SQL
+expression, with an offline MySQL generation regression. Final current-head
+CI is required before merging PR #4. R34-01 concerns pre-authentication legacy
+identifiers and remains open for local remediation before upgrading such a
+database or deployment; it does not affect newly provisioned canonical accounts.
+
+The owner's requested full Sections 3–4 re-review on 2026-09-13 covers both
+complete section changes and the uncommitted display amendment. It reproduced
+two medium findings: incompatible legacy Admin identifiers block documented
+recovery, and offline display-migration SQL emits a null required timestamp.
+See the [combined review](docs/reviews/section-03-04-review.md) for evidence,
+scope and proposed corrections. Application code was not changed by the review.
+All 283 local backend tests, Ruff, mypy, pip check and frontend checks pass;
+22 MySQL tests remain unexecuted for the current working tree. The historical
+Section 3 approval below is unchanged; these findings require follow-up.
 
 Full-review implementation baseline: `8a44eb4`, based on merged Section 2 `6b0509e`.
 The full review covers every section file, including migrations, tests,
@@ -76,6 +95,15 @@ The owner approved Section 2 with those findings visible. Both are corrected
 and verified in Section 3; the original review remains historical evidence.
 
 ## What exists and what comes next
+
+On 2026-09-11 the owner confirmed Admin-adjustable display rounding across all
+interfaces, including existing runs, while recorded data remains unchanged (D30).
+Section 4 implements `DisplaySettingsService`, a shared formatter, current
+rounded read projections alongside canonical values, and migration `c2a54f8d7109`.
+Verification is in progress; the earlier evidence below applies to the named
+baseline. The [review addendum](docs/reviews/section-04-review.md) tracks this amendment.
+Local verification passed 283 backend tests, Ruff and mypy (44 source files);
+22 MySQL tests await CI. No frontend files or production data were changed.
 
 The backend includes verified authentication services/APIs, local Admin setup,
 server-side sessions, activation/recovery grants, and related tests. Section 4

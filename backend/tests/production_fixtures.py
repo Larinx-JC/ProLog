@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 from uuid import uuid4
 
 from app.domain.numeric import AccuracyPolicy
-from app.models import AccuracyVersion, ProductionSettings
+from app.models import AccuracyVersion, DisplaySettings, ProductionSettings
 from app.services.auth import AuthService
 from app.services.auth_types import SessionIssued
 from app.services.production.base import Document
@@ -40,6 +40,8 @@ def request_id() -> str:
 def seed_settings(auth: AuthService) -> None:
     """Mirror migration defaults only for create_all unit fixtures; never seed real tests twice."""
     with auth.factory.begin() as db:
+        if db.get(DisplaySettings, 1) is None:
+            db.add(DisplaySettings(id=1, updated_at=auth.clock.now()))
         if db.get(ProductionSettings, 1) is None:
             db.add(
                 AccuracyVersion(

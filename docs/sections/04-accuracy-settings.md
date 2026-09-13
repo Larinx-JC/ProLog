@@ -6,6 +6,14 @@ Section 4; production endpoints to Section 5; the new Admin page to Section
 are implemented, reviewed and CI verified; the API and page remain scheduled
 for their approved later sections. See [implementation](../run-lifecycle.md).
 
+Amendment confirmed on 2026-09-11 (D30): separate current display rounding from
+recording accuracy. Admin changes apply across all screens, including existing,
+Reviewed and legacy runs. Stored readings, captured recording accuracy, original
+statistics, alarms and historical audit payloads remain unchanged. For example,
+displaying `102.004` as `102.00` cannot turn a recorded threshold breach into a pass.
+The backend amendment is implemented; its verification evidence is recorded in
+the [full review](../reviews/section-04-review.md).
+
 ## Confirmed behavior
 
 - Use maximum individual-point target deviation for the alarm; show maximum
@@ -21,20 +29,30 @@ for their approved later sections. See [implementation](../run-lifecycle.md).
   existing full run snapshot.
 - Initial target-deviation tolerance is 2.00%, adjustable by Admin per material.
 - Thickness values such as 0.006 mm must survive entry, storage and readback.
+- Current display places (0–6 for each group) and half-up/half-even mode are
+  independently Admin adjustable. A lower display precision is allowed even
+  when material or measurement data has more digits. Raising display places
+  pads available values; it does not recover precision absent from recorded data.
 
 ## Admin page
 
 Provide a Measurement & Accuracy Settings entry in the Admin navigation.
-Show each quantity's unit, decimal places and an example value; show the
-rounding choice with halfway examples. Reuse the material editor for target,
+Show separate Recording Accuracy and Screen Display controls. Show each
+quantity's unit, places and an example value; show rounding with halfway examples.
+Recording settings apply to new runs; display settings affect every current
+screen on refresh. Reuse the material editor for target,
 upper/lower resistance limits, thickness limits, deviation tolerance and check
 switches. Uniformity is informational, not an additional enabled alarm.
 
 On save, validate supported scales and existing material-rule compatibility,
 then persist the new policy and audit actor, server time and before/after
-settings atomically. Show which policy new runs will use. Existing runs and
-their exports use their captured policy. Do not silently modify material
-standards to fit a lower precision.
+settings atomically. Show which recording policy new runs will use. Existing
+records and export data retain their captured policy. Display-only saves need
+no material-precision compatibility check. Do not silently modify material
+standards to fit a lower precision. Exact values remain available in details
+and edit controls; never initialize a measurement edit from rounded display text.
+Existing alarm badges use the recorded decision even when displayed values round
+to the boundary. Rendering choices for exported files remain Section 7 work.
 
 ## Types and storage direction
 
@@ -44,6 +62,7 @@ standards to fit a lower precision.
 | Rounding mode | Controlled choice: half-up or half-even |
 | Measurements and thresholds | Python Decimal / MySQL DECIMAL; no binary-float conversion |
 | API quantities | Decimal strings formatted according to the run policy |
+| Screen values | Separate display strings using the current global preference; canonical API quantities stay exact |
 | IDs, versions, intervals, sample counts | Integer |
 | Policy/audit event times | Authoritative server UTC; display Asia/Shanghai |
 
@@ -65,6 +84,15 @@ An additional current operational switch lets Admin enable/disable Operator
 work on their own Abnormal runs. Its initial value is enabled. Unlike captured
 numeric policy, this permission switch is checked against current settings on
 every write and takes effect immediately for existing runs.
+
+Migration `c2a54f8d7109` adds a separate `display_settings` singleton with five
+integer scales, rounding mode, positive revision, server UTC update time and
+optional updating-Admin FK. Initial preferences copy the current factory
+recording accuracy once; subsequent changes are independent. `DisplaySettingsService`
+allows every permitted reader to fetch preferences, Admin-only audited changes,
+revision conflicts and durable retries. Shared `DisplayFormatter` supplies
+rounded copies for all future numeric screens. No Run references this singleton
+as its recording policy.
 
 ## Class/data flow and delivery sections
 
@@ -100,6 +128,11 @@ lock order so a run never sees a partially changed policy.
    and rollback if auditing or persistence fails.
 8. Test populated upgrade, legacy interpretation, drift and lossless downgrade
    behavior against MySQL. Update the schema and operating documentation.
+9. Change display precision/mode across Active, Abnormal, Pending Review,
+   Reviewed and legacy runs. Prove stored production rows and historical audits
+   remain equal, and that canonical edit values retain all recorded digits.
+10. Verify display-only Admin authorization, audit rollback, stale/concurrent
+    changes, retry behavior, null/zero handling and coherent preference reads.
 
 Confirmed lifecycle choices are recorded in the main
 [Section 4 plan](04-run-lifecycle.md) and [decision register](../decisions.md).
