@@ -37,6 +37,8 @@ are explicit deliverables within the existing sections.
    and overview aggregates. Accuracy-setting mutations are Admin-only.
    Reuse Section 3 authentication and Section 4 services; validate the API
    data contract. Raw ORM writes must not bypass production services.
+   See the [Section 5 acceptance plan](sections/05-backend-api.md) and
+   [production API guide](backend-api.md).
 6. **Search System** — shared permission-aware filtering, sorting, and
    pagination for runs, measurements, materials, and audit logs. Define
    attributes, timezone/date boundaries, indexes, expected data volume, and

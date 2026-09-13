@@ -1,8 +1,9 @@
 # Archived planning and review notes
 
-Latest review: [full Sections 3–4 re-review, 2026-09-13](reviews/section-03-04-review.md).
-It includes the uncommitted display amendment and records two open migration-path
-findings, local verification, and pending current-tree MySQL verification.
+Latest review: [Section 5 backend API](reviews/section-05-review.md).
+The [full Sections 3–4 re-review, 2026-09-13](reviews/section-03-04-review.md)
+includes the display amendment and two migration-path findings. Section 4 closeout
+fixes R34-02 and passes exact-head CI; R34-01 remains a legacy-account follow-up.
 
 Current full-section reviews: [Section 2](reviews/section-02-review.md),
 [Section 3](reviews/section-03-review.md), and [Section 4](reviews/section-04-review.md).
