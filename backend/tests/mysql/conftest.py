@@ -4,7 +4,7 @@ import os
 
 import pytest
 from alembic.config import Config
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.engine import make_url
 from sqlalchemy.orm import sessionmaker
 
@@ -37,5 +37,14 @@ def mysql_auth(monkeypatch: pytest.MonkeyPatch, passwords: Passwords):
         settings = SettingsWithoutDotenv(app_env="test", secret_key="integration-test-" * 4)
         yield AuthService(factory, settings, FrozenClock(), passwords)
     finally:
+        # Six-place production data cannot be downgraded losslessly to scale 2.
+        # Clear only this previously validated disposable test database first;
+        # leave the production migration's loss-prevention guard intact.
+        tables = MetaData()
+        tables.reflect(bind=engine)
+        with engine.begin() as connection:
+            for table in reversed(tables.sorted_tables):
+                if table.name != "alembic_version":
+                    connection.execute(table.delete())
         engine.dispose()
         get_settings.cache_clear()

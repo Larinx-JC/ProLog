@@ -4,6 +4,7 @@
 #   pip install -e ".[dev]" --upgrade
 #   pip freeze --exclude-editable > requirements-lock.txt
 alembic==1.19.1
+tzdata==2026.3
 annotated-doc==0.0.5
 annotated-types==0.8.0
 argon2-cffi==25.1.0

@@ -4,6 +4,14 @@ This describes the production schema introduced in Section 2. Section 3 adds
 `users.activated_at` and four authentication tables; their types, relationships,
 indexes and migration behavior are documented in [authentication](authentication.md).
 
+Section 4 requirement amendment (2026-09-08): the owner selected thickness in
+mm with three decimal places and an Admin accuracy settings portal. The schema
+below describes the approved Section 2 baseline. Section 4 adds migration
+`b6d84e19a203` and policy/sampling/retry structures, with `DECIMAL(24,6)` numeric
+capacity. No approved migration has been rewritten. Current structure and
+workflow are documented in [run lifecycle](run-lifecycle.md); see also the
+[accuracy settings contract](sections/04-accuracy-settings.md) and D06/D23–D29.
+
 ## Entity-relationship diagram
 
 ```mermaid
@@ -153,8 +161,11 @@ See [the current outline](outline.md) and [decisions](decisions.md).
   a live lookup. Changes to a material's rules are still visible via
   AuditLog (before/after free text), matching how material standard
   changes were already shown in the original design.
-- **All measured physical quantities and calculated numeric results use
-  `DECIMAL(10, 2)`**, mapped to Python `Decimal` (never `float`).
+- **The implemented Section 2 physical quantities and calculated results use
+  `DECIMAL(10, 2)`**, mapped to Python `Decimal` (never `float`). The owner's
+  Section 4 amendment replaces uniform scale 2 with configurable accuracy,
+  initially three-place thickness and two places for other quantities/results.
+  See the implemented Section 4 storage amendment above and its migration.
   Identifiers, counts, and whole-second intervals (`id`, `interval_seconds`)
   are plain integers — the DECIMAL policy is about values that could
   carry a fractional/measured component, not every numeric column

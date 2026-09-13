@@ -22,9 +22,11 @@ before continuing work.
   only intended files.
 - Use reusable domain/service classes and shared UI components. Document each
   written function and test important success, rejection, and error behavior.
-- Measured quantities/calculated results use Decimal/DECIMAL with scale 2.
-  IDs, discrete counts, and whole-second intervals use integers. Follow the
-  UTC storage convention and resolve API/rounding choices in the decision log.
+- Measured quantities/calculated results use Decimal/DECIMAL. Initial scale is
+  2 except thickness in mm at scale 3; the owner requires Admin-configurable
+  accuracy settings. Follow the current decision log for supported precision,
+  policy scope, and rounding. IDs, discrete counts, and whole-second intervals
+  use integers. Keep UTC storage and Asia/Shanghai factory presentation.
 - Production transitions and snapshot copying/immutability are Section 4
   service responsibilities. All entry paths must eventually use those writers.
 - Use one branch/PR per section and update its acceptance evidence. Match CI

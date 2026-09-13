@@ -1,5 +1,16 @@
 # Archived planning and review notes
 
+Latest review: [full Sections 3–4 re-review, 2026-09-13](reviews/section-03-04-review.md).
+It includes the uncommitted display amendment and records two open migration-path
+findings, local verification, and pending current-tree MySQL verification.
+
+Current full-section reviews: [Section 2](reviews/section-02-review.md),
+[Section 3](reviews/section-03-review.md), and [Section 4](reviews/section-04-review.md).
+Section 4's 2026-09-11 review includes the MySQL rollback correction, legacy
+completeness correction and expanded lifecycle/concurrency verification.
+These links supplement the historical notes below; approval is recorded in
+[project status](../PROJECT_STATUS.md).
+
 Archived on 2026-09-07 from the former project outline.
 
 These notes preserve the development history through Section 2. They are not

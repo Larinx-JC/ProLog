@@ -8,6 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.time import utcnow
 from app.db.session import Base
+from app.models.mixins import PRECISE_TIME
 
 if TYPE_CHECKING:
     from app.models.user import User
@@ -39,7 +40,7 @@ class AuditLog(Base):
     __tablename__ = "audit_logs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    occurred_at: Mapped[datetime] = mapped_column(default=utcnow)
+    occurred_at: Mapped[datetime] = mapped_column(PRECISE_TIME, default=utcnow)
     actor_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
 
     action: Mapped[str] = mapped_column(String(50), index=True)

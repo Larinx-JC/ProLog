@@ -8,7 +8,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.enums import ReviewResolution, RunStatus, sa_enum
-from app.models.mixins import AbnormalityRulesMixin, TimestampMixin, abnormality_rule_constraints
+from app.models.mixins import (
+    PRECISE_TIME,
+    AbnormalityRulesMixin,
+    TimestampMixin,
+    abnormality_rule_constraints,
+)
 
 if TYPE_CHECKING:
     from app.models.material import Material
@@ -62,6 +67,10 @@ class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    revision: Mapped[int] = mapped_column(default=1, server_default="1")
+    accuracy_version_id: Mapped[int | None] = mapped_column(ForeignKey("accuracy_versions.id"))
+    missing_count_at_close: Mapped[int | None] = mapped_column()
+    closure_exception_reason: Mapped[str | None] = mapped_column(Text)
     run_code: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     material_id: Mapped[int] = mapped_column(ForeignKey("materials.id"))
     raw_material_batch: Mapped[str] = mapped_column(String(100))
@@ -74,8 +83,8 @@ class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     # PENDING_REVIEW (ACTIVE or ABNORMAL) -- None until it does.
     pending_from: Mapped[RunStatus | None] = mapped_column(sa_enum(RunStatus), default=None)
 
-    start_time: Mapped[datetime] = mapped_column()
-    end_time: Mapped[datetime | None] = mapped_column(default=None)
+    start_time: Mapped[datetime] = mapped_column(PRECISE_TIME)
+    end_time: Mapped[datetime | None] = mapped_column(PRECISE_TIME, default=None)
 
     created_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
@@ -84,7 +93,7 @@ class Run(TimestampMixin, AbnormalityRulesMixin, Base):
     )
     review_reason: Mapped[str | None] = mapped_column(Text, default=None)
     reviewed_by_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), default=None)
-    reviewed_at: Mapped[datetime | None] = mapped_column(default=None)
+    reviewed_at: Mapped[datetime | None] = mapped_column(PRECISE_TIME, default=None)
 
     material: Mapped["Material"] = relationship()
     created_by: Mapped["User"] = relationship(foreign_keys=[created_by_id])

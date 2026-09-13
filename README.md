@@ -37,7 +37,15 @@ PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching/PR workflow.
 
 For the current handover, start with [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Confirmed choices are in [docs/decisions.md](docs/decisions.md); the
-current section's checklist is [Section 3 authentication](docs/sections/03-authentication.md).
+current section's checklist is [Section 4 run lifecycle](docs/sections/04-run-lifecycle.md).
+The owner-added [Measurement & Accuracy Settings page](docs/sections/04-accuracy-settings.md)
+is planned for Section 11D, with its backend policy and storage prepared in
+Section 4. Initial thickness precision is three decimal places in mm;
+the Section 4 backend/migration are implemented, reviewed and CI verified,
+while the API and settings page remain scheduled for their later sections.
+Admin-adjustable screen rounding is now separate from recording accuracy and
+applies to existing and new runs. Canonical values and alarm results remain
+unchanged; see the current display amendment in the status and review documents.
 
 ```
 backend/    FastAPI app, SQLAlchemy models, Alembic migrations, pytest
@@ -84,9 +92,10 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Sections 1 and 2 are verified and merged. Section 3 authentication is implemented,
-fully reviewed, and awaiting owner verification after passing CI. See the
-[Section 3 review](docs/reviews/section-03-review.md) and status page for evidence.
+Sections 1–3 are verified and merged. Section 4's service layer and migration
+are implemented, fully reviewed and CI verified; owner verification is pending.
+See the [full review](docs/reviews/section-04-review.md),
+[implementation guide](docs/run-lifecycle.md) and status page for evidence.
 
 The React application is currently a scaffold. See
 [PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,

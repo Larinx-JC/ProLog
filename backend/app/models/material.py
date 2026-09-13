@@ -21,6 +21,7 @@ class Material(TimestampMixin, AbnormalityRulesMixin, Base):
     __table_args__ = abnormality_rule_constraints("materials")
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    revision: Mapped[int] = mapped_column(default=1, server_default="1")
     material_no: Mapped[str] = mapped_column(String(50), unique=True, index=True)
     # Soft delete: a Material referenced by historical Runs can't be hard-
     # deleted without orphaning their foreign key, so "deleting" a material

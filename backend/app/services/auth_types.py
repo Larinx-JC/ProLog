@@ -30,6 +30,7 @@ class Permission(StrEnum):
     AUDIT_READ = "audit:read"
     EXPORT = "export:create"
     USER_MANAGE = "user:manage"
+    PRODUCTION_SETTINGS_MANAGE = "production_settings:manage"
 
 
 ROLE_PERMISSIONS = {

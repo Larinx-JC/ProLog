@@ -4,6 +4,9 @@ Status: implementation authorized by the owner's Section 2 verification on
 2026-09-07; see [project status](../../PROJECT_STATUS.md).
 Implementation, full review and CI verification are complete; evidence is
 recorded in the [review report](../reviews/section-03-review.md).
+The owner verified Section 3 and authorized Section 4 on 2026-09-08.
+PR #3 merged as `f7bee48`; current work is in the
+[Section 4 acceptance plan](04-run-lifecycle.md).
 
 Section 3 also closes the non-blocking R2-01/R2-02 review follow-ups: align
 ORM/database defaults and their drift checks, and complete function comments.

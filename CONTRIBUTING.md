@@ -68,11 +68,15 @@ and [decisions](docs/decisions.md).
 - Follow [the testing plan](docs/testing.md): behavioral assertions, selected
   MySQL integration checks, deterministic time tests, and scoped coverage.
   State what a passing check actually proves and what was not executed.
-- Measured physical quantities and calculated numeric results are
-  consistently 2-decimal fixed-point values end to end: MySQL
-  `DECIMAL(10,2)`, Python `Decimal` (never `float`), Pydantic constrained
-  `Decimal`. Identifiers, counts, and whole-second intervals use plain
-  integers instead — see `docs/data-model.md`.
+- Measured physical quantities and calculated numeric results use exact
+  fixed-point values: MySQL `DECIMAL`, Python `Decimal` (never `float`), and
+  Pydantic constrained `Decimal`. Initial precision is two decimal places
+  except thickness in mm at three. The owner requires Admin-configurable
+  accuracy settings; keep field validation, calculation and formatting
+  consistent with the approved policy. Identifiers, discrete counts and
+  whole-second intervals stay integers. Section 4 extends storage to
+  `DECIMAL(24,6)` while services enforce each captured policy's 0–6 places.
+  See `docs/decisions.md` and `docs/run-lifecycle.md`.
 
 ## Documentation and handovers
 
