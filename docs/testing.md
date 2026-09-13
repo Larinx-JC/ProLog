@@ -8,17 +8,18 @@ for the last verified implementation commit.
 | Check | Current evidence / scope |
 | --- | --- |
 | Backend lint and type checks | Ruff over backend files; mypy over `app`. |
-| Backend pytest | 130 unit/SQLite migration tests in Section 3, including authentication, ORM behavior, seed-verifier branches, UTC assertions and test dotenv isolation. |
+| Backend pytest | Section 4 baseline: 284 passed. Section 5 adds HTTP lifecycle/authorization, strict numeric/settings validation, body limits, rollback, pagination/materialization and current-display tests; current counts are in its review. |
 | SQLite constraints | Foreign keys enabled per test connection; structural CHECK rejection tests. |
 | Windows/Linux backend CI | Locked dependencies, `pip check`, Ruff, mypy and the unit/SQLite migration suite on both systems. |
-| Linux MySQL 8.4 CI | Upgrade/check/seeds/downgrade plus eight migrated behavior tests: concurrent bootstrap/activation/recovery/final-Admin changes, rollback, existing-user preservation, quantities, constraints, timestamps and real default-drift detection. |
+| Linux MySQL 8.4 CI | Upgrade/check/seeds/downgrade plus 22 Section 4 migrated behavior tests and two Section 5 HTTP tests. Covers auth races, lifecycle/concurrency/rollback, decimals, snapshots/display, constraints and migration parity. Match executed results to the section review's commit. |
 | Frontend | ESLint, one scaffold component test, TypeScript compilation, and Vite build. |
 
 The fast SQLite service/ORM fixtures create tables from metadata. A separate
 SQLite migration test upgrades existing synthetic data and detects deliberate
 default drift. MySQL tests run the actual migrations against the explicitly
 designated disposable `prolog_test` database; they never use `create_all`.
-See [the Section 3 review](reviews/section-03-review.md) for executed evidence.
+See [the Section 5 review](reviews/section-05-review.md) for current executed
+evidence and [the Section 3 review](reviews/section-03-review.md) for auth history.
 
 Authentication fixtures use `tests.settings.SettingsWithoutDotenv` to ignore
 developer dotenv files while retaining environment-variable loading and all

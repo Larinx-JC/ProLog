@@ -9,8 +9,8 @@ Updated: 2026-09-13. This is the starting point for project handovers.
 | 1 — Project Scaffolding & Conventions | Owner verified; merged | Main contains squash commit `3163e45`. |
 | 2 — Data Model & Database Schema | Owner verified and merged | [PR #2](https://github.com/Larinx-JC/ProLog/pull/2), squash `6b0509e`; final closeout CI `34085202115` passed. |
 | 3 — Authentication & Multi-Level Authorization | Owner verified and merged | [PR #3](https://github.com/Larinx-JC/ProLog/pull/3), squash `f7bee48`; [full review](docs/reviews/section-03-review.md). |
-| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Owner approved; final closeout CI pending | Branch `codex/section-04-run-lifecycle`, PR #4; display amendment includes the R34-02 offline SQL correction. R34-01 remains a tracked legacy-account follow-up. |
-| 5 — Backend API Layer | Owner authorized; preparation underway | Production APIs will reuse the approved authentication/domain services; branch starts after Section 4 closeout. |
+| 4 — Core Domain Logic — Run Lifecycle (OOP service layer) | Owner verified and merged | [PR #4](https://github.com/Larinx-JC/ProLog/pull/4), squash `8e297e9`; final head `df8ec69` passed CI `34743260352`. R34-02 fixed; R34-01 remains a legacy-account follow-up. |
+| 5 — Backend API Layer | Implemented; review and CI in progress | Branch `codex/section-05-backend-api`, base `8e297e9`; [API guide](docs/backend-api.md), [acceptance plan](docs/sections/05-backend-api.md). |
 | 6–16 | Planned | [Current outline](docs/outline.md). |
 
 After receiving the full Section 2 review, the owner verified Section 2 and
@@ -24,15 +24,28 @@ Section 4. The exact approved head `21e7c6a` had all five checks passing in
 [CI run 34185911703](https://github.com/Larinx-JC/ProLog/actions/runs/34185911703).
 PR #3 was merged, and Section 4's branch starts from squash `f7bee48`.
 
-## Section 3 verification
+## Section 4 closeout and Section 5 authorization
 
 On 2026-09-13 the owner stated: "ok, I approve the implementation for 4 and
 lets start section 5". This explicitly verifies Section 4 and authorizes
 Section 5. R34-02 is corrected by binding the timestamp into the migration SQL
-expression, with an offline MySQL generation regression. Final current-head
-CI is required before merging PR #4. R34-01 concerns pre-authentication legacy
+expression, with an offline MySQL generation regression. Final head `df8ec69`
+passed all five jobs in [CI 34743260352](https://github.com/Larinx-JC/ProLog/actions/runs/34743260352):
+284 backend tests on each Windows/Linux runner, 22 MySQL integration tests,
+upgrade/seeds/drift/downgrade, lint/type/dependency checks and frontend lint/test/build.
+PR #4 was squash merged as `8e297e9`, the Section 5 base.
+R34-01 concerns pre-authentication legacy
 identifiers and remains open for local remediation before upgrading such a
 database or deployment; it does not affect newly provisioned canonical accounts.
+
+Section 5 adds authenticated bounded production HTTP routes and read queries,
+strict decimal-string schemas, CSRF/body limits, stable retry/conflict contracts,
+current display projections, audit reads and explicit Shanghai overview counts.
+No database migration or dependency changes are required. Section 6 is gated on
+the owner's Section 5 verification. See the [review](docs/reviews/section-05-review.md)
+for local checks, full-diff findings and pending/current CI evidence.
+
+## Historical Section 3 verification and combined re-review
 
 The owner's requested full Sections 3–4 re-review on 2026-09-13 covers both
 complete section changes and the uncommitted display amendment. It reproduced
@@ -172,7 +185,8 @@ completed before the owner replied on 2026-09-08:
 
 > Ok, I confirm section 3 and I approve to move to section 4
 
-This explicit approval authorizes Section 4. PR #3 merged after its exact-head
-checks were confirmed. Section 5 is not authorized. See
+This explicit approval authorized Section 4. PR #3 merged after its exact-head
+checks were confirmed. On 2026-09-13 the owner approved Section 4 and authorized
+Section 5 as quoted above; Section 6 is not authorized. See
 [CONTRIBUTING](CONTRIBUTING.md) for the section workflow and
 [review history](docs/review-history.md) for past reviews.

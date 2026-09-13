@@ -152,3 +152,12 @@ On 2026-09-13 the owner explicitly approved Section 4 and authorized Section 5:
 The combined re-review and migration correction are recorded in
 [the Sections 3–4 report](section-03-04-review.md). Final closeout CI precedes
 merge; project status records the actual merge and Section 5 baseline.
+
+Closeout completed: `df8ec69` passed all five jobs in
+[CI 34743260352](https://github.com/Larinx-JC/ProLog/actions/runs/34743260352),
+including 284 backend tests on both operating systems, 22 MySQL integration
+tests, migration/seed/drift/downgrade and frontend lint/test/build.
+The PR was squash merged as `8e297e9`. R34-02 is fixed with an offline MySQL
+generation regression; R34-01 remains the explicitly tracked legacy-account
+remediation requirement in the combined review. Earlier pending-CI statements
+describe historical checkpoints, not the merged closeout.

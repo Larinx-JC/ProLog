@@ -79,6 +79,10 @@ The bootstrap command prompts for a password and works only once. See
 [authentication operations and API](docs/authentication.md) for activation,
 recovery, session policy, configuration, and a repeatable demonstration.
 
+The [production API guide](docs/backend-api.md) covers runs, measurements,
+materials, Admin review/settings, audit reads and overview counts. Interactive
+schemas are available at `/docs` while the backend is running.
+
 ### Frontend
 
 ```
@@ -92,10 +96,10 @@ Run tests: `npm test -- --run` (from `frontend/`). Lint: `npm run lint`.
 
 ## Status
 
-Sections 1–3 are verified and merged. Section 4's service layer and migration
-are implemented, fully reviewed and CI verified; owner verification is pending.
-See the [full review](docs/reviews/section-04-review.md),
-[implementation guide](docs/run-lifecycle.md) and status page for evidence.
+Sections 1–4 are owner verified and merged. Section 5's backend API is implemented
+and undergoing full review and CI verification before owner sign-off. See the
+[Section 5 review](docs/reviews/section-05-review.md) and
+[API guide](docs/backend-api.md). Section 6 remains gated.
 
 The React application is currently a scaffold. See
 [PROJECT_STATUS.md](PROJECT_STATUS.md) for the tested commit, CI evidence,
